@@ -1,2 +1,6 @@
+<<<<<<< HEAD
+hello yoseph
+=======
 evanjay
 hai evan
+>>>>>>> 9671019fb31e32ae4a6e01c588d61a1ed264f6b1
