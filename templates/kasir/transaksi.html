@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Putra Joyo Snack — Transaksi Kasir</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background-color: #FDFBF7; color: #333; }
+        .sidebar { width: 250px; background-color: #FFA726; height: 100vh; padding: 20px; box-sizing: border-box; color: white; position: fixed; }
+        .sidebar h2 { text-align: center; font-size: 20px; margin-bottom: 20px; }
+        .sidebar a { display: block; color: white; padding: 12px 15px; text-decoration: none; border-radius: 5px; margin-bottom: 8px; font-weight: bold; }
+        .sidebar a:hover { background-color: #FB8C00; }
+        .sidebar .logout-btn { background-color: #E65100; margin-top: 30px; text-align: center; }
+        .content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); box-sizing: border-box; }
+
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+        .transaksi-container { display: flex; gap: 30px; }
+        .barang-side { flex: 2; }
+        .keranjang-side { flex: 1; background: white; padding: 25px; border-radius: 12px; border: 2px solid #FFE0B2; box-shadow: 0 4px 6px rgba(0,0,0,0.02); height: fit-content; }
+
+        .search-container { background-color: #FFF8E1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #FFCC80; display: flex; align-items: center; gap: 10px; }
+        .search-container input { padding: 8px; border: 1px solid #FFCC80; border-radius: 4px; width: 250px; }
+
+        .data-table { width: 100%; border-collapse: collapse; background: white; }
+        .data-table th, .data-table td { border: 1px solid #FFE0B2; padding: 12px; text-align: left; }
+        .data-table th { background-color: #FFA726; color: white; }
+        .data-table tr:nth-child(even) { background-color: #FFFDE7; }
+
+        .qty-input { width: 50px; padding: 5px; border: 1px solid #FFCC80; border-radius: 4px; }
+
+        .btn-add { background-color: #4CAF50; color: white; padding: 6px 14px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-add:hover { background-color: #45a049; }
+
+        .keranjang-side h3 { margin-top: 0; color: #E65100; font-size: 18px; margin-bottom: 20px; border-bottom: 1px solid #FFE0B2; padding-bottom: 10px; }
+        .keranjang-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #FFF3E0; font-size: 14px; }
+        .btn-hapus { background-color: #EF5350; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-hapus:hover { background-color: #D32F2F; }
+
+        .total-box { text-align: right; margin-top: 15px; font-size: 18px; font-weight: bold; color: #E65100; background-color: #FFE0B2; padding: 15px; border-radius: 8px; }
+
+        .btn-simpan { background-color: #FFA726; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 15px; }
+        .btn-simpan:hover { background-color: #FB8C00; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Putra Joyo Snack</h2>
+        <hr style="border: 0; height: 1px; background: #FFE0B2; margin-bottom: 20px;">
+        <a href="/kasir/dashboard">📊 Dashboard</a>
+        <a href="/kasir/transaksi">🛒 Transaksi</a>
+        <a href="/kasir/retur">↩️ Retur</a>
+        <a href="/kasir/pengiriman">🚚 Pengiriman</a>
+        <a class="logout-btn" href="/logout">🚪 Logout</a>
+    </div>
+
+    <div class="content">
+        <div class="header-section">
+            <h1>Transaksi Penjualan</h1>
+            <div>Input oleh: <strong>{{ session['username'] }}</strong></div>
+        </div>
+
+        <div class="search-container">
+            <label><strong>Cari Barang:</strong></label>
+            <input type="text" id="search-barang" placeholder="Ketik nama snack..." onkeyup="filterBarang()">
+        </div>
+
+        <div class="transaksi-container">
+            <div class="barang-side">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nama Barang</th>
+                            <th>Harga</th>
+                            <th>Stok</th>
+                            <th>Qty</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-barang">
+                        {% for barang in barang_list %}
+                        <tr class="row-barang" data-nama="{{ barang.nama_barang|lower }}">
+                            <td>{{ barang.nama_barang }}</td>
+                            <td>Rp{{ "{:,.0f}".format(barang.harga) }}</td>
+                            <td>{{ barang.stok }}</td>
+                            <td><input class="qty-input" type="number" id="qty-{{ barang.id }}" min="1" max="{{ barang.stok }}" value="1"></td>
+                            <td><button class="btn-add" onclick="tambahKeranjang({{ barang.id }}, '{{ barang.nama_barang }}', {{ barang.harga }})">+ Tambah</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="keranjang-side">
+                <h3>🛒 Keranjang</h3>
+                <div id="keranjang-list">
+                    <p style="color:#999; font-size:14px;">Belum ada barang dipilih.</p>
+                </div>
+                <div class="total-box">Total: Rp<span id="total-harga">0</span></div>
+                <button class="btn-simpan" onclick="simpanTransaksi()">Simpan Transaksi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let keranjang = [];
+
+        function filterBarang() {
+            const keyword = document.getElementById("search-barang").value.toLowerCase();
+            document.querySelectorAll(".row-barang").forEach(row => {
+                row.style.display = row.dataset.nama.includes(keyword) ? "" : "none";
+            });
+        }
+
+        function tambahKeranjang(id, nama, harga) {
+            const qtyInput = document.getElementById(`qty-${id}`);
+            const qty = parseInt(qtyInput.value);
+            if (!qty || qty < 1) return;
+
+            const existing = keranjang.find(k => k.barang_id === id);
+            if (existing) {
+                existing.qty += qty;
+            } else {
+                keranjang.push({ barang_id: id, nama, harga, qty });
+            }
+            renderKeranjang();
+        }
+
+        function hapusItem(id) {
+            keranjang = keranjang.filter(k => k.barang_id !== id);
+            renderKeranjang();
+        }
+
+        function renderKeranjang() {
+            const list = document.getElementById("keranjang-list");
+            let total = 0;
+
+            if (keranjang.length === 0) {
+                list.innerHTML = `<p style="color:#999; font-size:14px;">Belum ada barang dipilih.</p>`;
+            } else {
+                list.innerHTML = "";
+                keranjang.forEach(k => {
+                    const subtotal = k.harga * k.qty;
+                    total += subtotal;
+                    list.innerHTML += `
+                        <div class="keranjang-item">
+                            <span>${k.nama} x${k.qty}<br><strong>Rp${subtotal.toLocaleString()}</strong></span>
+                            <button class="btn-hapus" onclick="hapusItem(${k.barang_id})">Hapus</button>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById("total-harga").innerText = total.toLocaleString();
+        }
+
+        async function simpanTransaksi() {
+            if (keranjang.length === 0) {
+                alert("Keranjang masih kosong!");
+                return;
+            }
+            const items = keranjang.map(k => ({ barang_id: k.barang_id, qty: k.qty }));
+
+            const res = await fetch("/kasir/transaksi", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                items,
+                        kasir_id: "{{ session['user_id'] }}"
+            })
+});
+
+            const result = await res.json();
+            if (result.error) {
+                alert("Gagal: " + result.error);
+            } else {
+                alert("Transaksi berhasil! Total: Rp" + result.total.toLocaleString());
+                keranjang = [];
+                renderKeranjang();
+                location.reload();
+            }
+        }
+    </script>
+
+</body>
+</html>
