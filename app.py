@@ -2,8 +2,8 @@ from flask import Flask, render_template, request, redirect, session
 from config import Config
 from models.user import db, User
 
+# KONFIGURASI: Arahkan template ke folder 'Frontend' sesuai instruksi tugas
 app = Flask(__name__)
-
 app.config.from_object(Config)
 
 db.init_app(app)
@@ -12,18 +12,16 @@ with app.app_context():
     db.create_all()
 
 
-# HOME
+# ==================== HOME ====================
 @app.route("/")
 def home():
     return redirect("/login")
 
 
-# LOGIN
+# ==================== LOGIN ====================
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
-
         username = request.form["username"]
         password = request.form["password"]
 
@@ -33,61 +31,90 @@ def login():
         ).first()
 
         if user:
-
             session["user_id"] = user.id
             session["username"] = user.username
             session["role"] = user.role
 
-            if user.role == "admin":
+            # Harmonisasi string role (samakan dengan huruf di database/enum)
+            if user.role.lower() == "admin":
                 return redirect("/admin/dashboard")
-
-            elif user.role == "kasir":
+            elif user.role.lower() == "kasir":
                 return redirect("/kasir/dashboard")
-
-            elif user.role == "gudang":
+            elif user.role.lower() == "staf gudang" or user.role.lower() == "gudang":
                 return redirect("/gudang/dashboard")
 
-        return "Username atau Password Salah"
+        return render_template("login.html", error="Username atau Password Salah")
 
+    # Diarahkan ke folder admin/login.html sesuai struktur direktori tugas
     return render_template("login.html")
 
 
-# ADMIN
+# ==================== ADMIN ====================
 @app.route("/admin/dashboard")
 def admin_dashboard():
-
     if "user_id" not in session:
         return redirect("/login")
+        
+    if session.get("role").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
 
-    return "Dashboard Admin"
+    # Mengembalikan file HTML asli, bukan string teks polos lagi
+    return render_template("admin/dashboard.html")
+# ==================== ROUTE SUB-MENU ADMIN ====================
+@app.route("/admin/barang")
+def admin_barang():
+    if "user_id" not in session:
+        return redirect("/login")
+    return render_template("admin/barang.html")
 
+@app.route("/admin/user")
+def admin_user():
+    if "user_id" not in session:
+        return redirect("/login")
+    return render_template("admin/user.html")
 
-# KASIR
+@app.route("/admin/laporan")
+def admin_laporan():
+    if "user_id" not in session:
+        return redirect("/login")
+    return render_template("admin/laporan.html")
+
+@app.route("/admin/kritik")
+def admin_kritik():
+    if "user_id" not in session:
+        return redirect("/login")
+    return render_template("admin/kritik.html")
+
+# ==================== KASIR ====================
 @app.route("/kasir/dashboard")
 def kasir_dashboard():
-
     if "user_id" not in session:
         return redirect("/login")
+        
+    if session.get("role").lower() != "kasir":
+        return "Akses Ditolak: Anda bukan Kasir", 403
 
-    return "Dashboard Kasir"
+    # Ganti dengan path template halaman transaksi utama milik kasir nanti
+    return render_template("utama/index.html", mode="kasir")
 
 
-# GUDANG
+# ==================== GUDANG ====================
 @app.route("/gudang/dashboard")
 def gudang_dashboard():
-
     if "user_id" not in session:
         return redirect("/login")
+        
+    if session.get("role").lower() not in ["gudang", "staf gudang"]:
+        return "Akses Ditolak: Anda bukan Staff Gudang", 403
 
-    return "Dashboard Staff Gudang"
+    # Ganti dengan path template halaman kelola stok milik gudang nanti
+    return render_template("utama/index.html", mode="gudang")
 
 
-# LOGOUT
+# ==================== LOGOUT ====================
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/login")
 
 

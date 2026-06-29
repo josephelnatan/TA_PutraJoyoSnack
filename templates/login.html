@@ -1,50 +1,151 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="id">
 <head>
-    <title>PUTRA JOYO SNACK</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUTRA JOYO SNACK — Login</title>
+    <style>
+        /* Gaya Tampilan Belakang (Background Gradasi Oranye) */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 50%, #FB8C00 100%);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Kotak Login Modern */
+        .login-card {
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            width: 360px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin: 0 0 5px 0;
+            color: #E65100;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .login-card p {
+            margin: 0 0 30px 0;
+            color: #777;
+            font-size: 14px;
+        }
+
+        /* Group Input Form */
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #444;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #FFE0B2;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: #FFFDE7;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        /* Efek saat Input diklik */
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #FB8C00;
+            background-color: #ffffff;
+            box-shadow: 0 0 8px rgba(251, 140, 0, 0.2);
+        }
+
+        /* Tombol Login Keren */
+        .btn-submit {
+            background: linear-gradient(90deg, #FFA726, #FB8C00);
+            color: white;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(251, 140, 0, 0.3);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: linear-gradient(90deg, #FB8C00, #E65100);
+            box-shadow: 0 7px 20px rgba(230, 81, 0, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Notifikasi Alert Merah Jika Salah Password */
+        .error-alert {
+            background-color: #FFEBEE;
+            color: #D32F2F;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-left: 4px solid #D32F2F;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
 
-<center>
+    <div class="login-card">
+        <h2>PUTRA JOYO SNACK</h2>
+        <p>Sistem Informasi Toko Snack</p>
+        
+        {% if error %}
+        <div class="error-alert">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
 
-    <h2>PUTRA JOYO SNACK</h2>
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <label>Username :</label>
+                <input type="text" name="username" placeholder="Ketik nama user..." required>
+            </div>
 
-    <h3>Login</h3>
+            <div class="form-group">
+                <label>Password :</label>
+                <input type="password" name="password" placeholder="Ketik password..." required>
+            </div>
 
-    <form method="POST">
+            <div class="form-group">
+                <label>Pilih Hak Akses (Role) :</label>
+                <select name="role" required>
+                    <option value="Admin">Admin</option>
+                    <option value="Kasir">Kasir</option>
+                    <option value="Staf Gudang">Staf Gudang</option>
+                </select>
+            </div>
 
-        <table>
-
-            <tr>
-                <td>Username :</td>
-                <td>
-                    <input type="text" name="username" required>
-                </td>
-            </tr>
-
-            <tr>
-                <td>Password :</td>
-                <td>
-                    <input type="password" name="password" required>
-                </td>
-            </tr>
-
-            <tr>
-                <td colspan="2" align="center">
-                    <br>
-                    <button type="submit">
-                        Login
-                    </button>
-                </td>
-            </tr>
-
-        </table>
-
-    </form>
-
-</center>
-
+            <button type="submit" class="btn-submit">Masuk Ke Sistem</button>
+        </form>
+    </div>
 
 </body>
 </html>

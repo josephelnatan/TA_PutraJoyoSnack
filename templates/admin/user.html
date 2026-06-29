@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Putra Joyo Snack — User Management</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background-color: #FDFBF7; color: #333; }
+        .sidebar { width: 250px; background-color: #FFA726; height: 100vh; padding: 20px; box-sizing: border-box; color: white; position: fixed; }
+        .sidebar h2 { text-align: center; font-size: 20px; margin-bottom: 20px; }
+        .sidebar a { display: block; color: white; padding: 12px 15px; text-decoration: none; border-radius: 5px; margin-bottom: 8px; font-weight: bold; }
+        .sidebar a:hover { background-color: #FB8C00; }
+        .sidebar .logout-btn { background-color: #E65100; margin-top: 30px; text-align: center; }
+        .content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); box-sizing: border-box; }
+        
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-add { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-add:hover { background-color: #45a049; }
+        
+        .search-container { background-color: #FFF8E1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #FFCC80; display: flex; align-items: center; gap: 10px; }
+        .search-container input { padding: 8px; border: 1px solid #FFCC80; border-radius: 4px; width: 250px; }
+        
+        .data-table { width: 100%; border-collapse: collapse; background: white; }
+        .data-table th, .data-table td { border: 1px solid #FFE0B2; padding: 12px; text-align: left; }
+        .data-table th { background-color: #FFA726; color: white; }
+        .data-table tr:nth-child(even) { background-color: #FFFDE7; }
+        
+        .btn-delete { background-color: #EF5350; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-delete:hover { background-color: #D32F2F; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); padding-top: 60px; }
+        .modal-content { background-color: white; margin: auto; padding: 30px; border: 2px solid #FFA726; width: 400px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .modal-content h3 { color: #E65100; margin-top: 0; margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #FFCC80; border-radius: 6px; box-sizing: border-box; background-color: #FFFDE7; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { background-color: #FFA726; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-save:hover { background-color: #FB8C00; }
+        .btn-cancel { background-color: #9E9E9E; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-cancel:hover { background-color: #757575; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <h2>Putra Joyo Snack</h2>
+        <hr style="border: 0; height: 1px; background: #FFE0B2; margin-bottom: 20px;">
+        <a href="/admin/dashboard">📊 Dashboard</a>
+        <a href="/admin/barang">📦 Data Barang</a>
+        <a href="/admin/user">👥 User Management</a>
+        <a href="/admin/laporan">📄 Laporan</a>
+        <a href="/admin/kritik">💬 Kritik & Saran</a>
+        <a class="logout-btn" href="/logout">🚪 Logout</a>
+    </div>
+
+    <!-- Konten Utama -->
+    <div class="content">
+        <div class="header-section">
+            <h1>Data User</h1>
+            <button class="btn-add" onclick="bukaModal()">+ Tambah User</button>
+        </div>
+
+        <div class="search-container">
+            <label><strong>Cari User:</strong></label>
+            <input type="text" placeholder="Ketik nama karyawan...">
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>KR01</td>
+                    <td>Brendan</td>
+                    <td>Kasir</td>
+                    <td>
+                        <button class="btn-delete">Hapus User</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MODAL POP-UP TAMBAH USER -->
+    <div id="modalUser" class="modal">
+        <div class="modal-content">
+            <h3>Tambah User</h3>
+            <form method="POST" action="/admin/user">
+                <div class="form-group">
+                    <label>ID User :</label>
+                    <input type="text" name="id_user" placeholder="Contoh: KR02" required>
+                </div>
+                <div class="form-group">
+                    <label>Username :</label>
+                    <input type="text" name="username" placeholder="Masukkan nama user..." required>
+                </div>
+                <div class="form-group">
+                    <label>Password :</label>
+                    <input type="password" name="password" placeholder="Masukkan password..." required>
+                </div>
+                <div class="form-group">
+                    <label>Role :</label>
+                    <select name="role" required>
+                        <option value="Admin">Admin</option>
+                        <option value="Kasir">Kasir</option>
+                        <option value="Staf Gudang">Staf Gudang</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-save">Simpan</button>
+                    <button type="button" class="btn-cancel" onclick="tutupModal()">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function bukaModal() {
+            document.getElementById("modalUser").style.display = "block";
+        }
+        function tutupModal() {
+            document.getElementById("modalUser").style.display = "none";
+        }
+    </script>
+
+</body>
+</html>

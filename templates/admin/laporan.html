@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Putra Joyo Snack — Laporan Finansial</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background-color: #FDFBF7; color: #333; }
+        .sidebar { width: 250px; background-color: #FFA726; height: 100vh; padding: 20px; box-sizing: border-box; color: white; position: fixed; }
+        .sidebar h2 { text-align: center; font-size: 20px; margin-bottom: 20px; }
+        .sidebar a { display: block; color: white; padding: 12px 15px; text-decoration: none; border-radius: 5px; margin-bottom: 8px; font-weight: bold; }
+        .sidebar a:hover { background-color: #FB8C00; }
+        .sidebar .logout-btn { background-color: #E65100; margin-top: 30px; text-align: center; }
+        .content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); box-sizing: border-box; }
+        
+        .filter-container { background-color: #FFF8E1; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #FFCC80; }
+        .filter-row { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .filter-row:last-child { margin-bottom: 0; }
+        .filter-row label { font-weight: bold; font-size: 14px; min-width: 110px; }
+        .filter-row select, .filter-row input { padding: 8px 12px; border: 1px solid #FFCC80; border-radius: 6px; background-color: #FFFDE7; }
+        
+        .btn-show { background-color: #0288D1; color: white; padding: 8px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-show:hover { background-color: #01579B; }
+        
+        .data-table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
+        .data-table th, .data-table td { border: 1px solid #FFE0B2; padding: 12px; text-align: left; }
+        .data-table th { background-color: #FFA726; color: white; }
+        .data-table tr:nth-child(even) { background-color: #FFFDE7; }
+        
+        .summary-box { text-align: right; margin-top: 20px; font-size: 18px; font-weight: bold; color: #E65100; background-color: #FFE0B2; padding: 15px; border-radius: 8px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Putra Joyo Snack</h2>
+        <hr style="border: 0; height: 1px; background: #FFE0B2; margin-bottom: 20px;">
+        <a href="/admin/dashboard">📊 Dashboard</a>
+        <a href="/admin/barang">📦 Data Barang</a>
+        <a href="/admin/user">👥 User Management</a>
+        <a href="/admin/laporan">📄 Laporan</a>
+        <a href="/admin/kritik">💬 Kritik & Saran</a>
+        <a class="logout-btn" href="/logout">🚪 Logout</a>
+    </div>
+
+    <div class="content">
+        <h1>Laporan Finansial</h1>
+        
+        <div class="filter-container">
+            <div class="filter-row">
+                <label>Jenis Laporan :</label>
+                <select id="jenisLaporan" onchange="gantiJenisLaporan()">
+                    <option value="penjualan">Penjualan</option>
+                    <option value="retur">Retur</option>
+                </select>
+            </div>
+            <div class="filter-row">
+                <label>Dari Tanggal :</label>
+                <input type="date" value="2026-06-01">
+                <label>Sampai Tanggal :</label>
+                <input type="date" value="2026-06-02">
+                <button class="btn-show" type="button">[Tampilkan]</button>
+            </div>
+        </div>
+
+        <div id="sectionPenjualan">
+            <h3>Detail Transaksi Penjualan</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>No Transaksi</th>
+                        <th>Tanggal</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>TR01</td>
+                        <td>01-06-2026</td>
+                        <td>50.000</td>
+                    </tr>
+                    <tr>
+                        <td>TR02</td>
+                        <td>02-06-2026</td>
+                        <td>75.000</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="summary-box">
+                Total Pendapatan : 125.000
+            </div>
+        </div>
+
+        <div id="sectionRetur" class="hidden">
+            <h3>Detail Retur Barang</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID Retur</th>
+                        <th>Tanggal</th>
+                        <th>Barang</th>
+                        <th>Jumlah</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>TR01</td>
+                        <td>01-06-2026</td>
+                        <td>Keripik</td>
+                        <td>2</td>
+                        <td>10.000</td>
+                    </tr>
+                    <tr>
+                        <td>TR02</td>
+                        <td>02-06-2026</td>
+                        <td>Waffer</td>
+                        <td>1</td>
+                        <td>25.000</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="summary-box">
+                Total Retur : 35.000
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function gantiJenisLaporan() {
+            var jenis = document.getElementById("jenisLaporan").value;
+            var sectionPenjualan = document.getElementById("sectionPenjualan");
+            var sectionRetur = document.getElementById("sectionRetur");
+            
+            if (jenis === "penjualan") {
+                sectionPenjualan.classList.remove("hidden");
+                sectionRetur.classList.add("hidden");
+            } else {
+                sectionPenjualan.classList.add("hidden");
+                sectionRetur.classList.remove("hidden");
+            }
+        }
+    </script>
+
+</body>
+</html>
