@@ -14,6 +14,7 @@ class Config:
         f"{os.getenv('TIDB_HOST')}:"
         f"{os.getenv('TIDB_PORT')}/"
         f"{os.getenv('TIDB_DATABASE')}"
+        f"?ssl_verify_cert=true&ssl_verify_identity=true"
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
