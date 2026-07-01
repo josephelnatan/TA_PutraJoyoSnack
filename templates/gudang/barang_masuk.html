@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+<meta charset="UTF-8">
+
+<title>Barang Masuk</title>
+
+<style>
+
+body{
+    font-family:'Segoe UI',Arial,sans-serif;
+    margin:0;
+    display:flex;
+    background:#FDFBF7;
+}
+
+.sidebar{
+    width:250px;
+    background:#FFA726;
+    height:100vh;
+    color:white;
+    position:fixed;
+    padding:20px;
+    box-sizing:border-box;
+}
+
+.sidebar h2{
+    text-align:center;
+}
+
+.sidebar a{
+    display:block;
+    text-decoration:none;
+    color:white;
+    padding:12px;
+    margin-bottom:8px;
+    border-radius:5px;
+    font-weight:bold;
+}
+
+.sidebar a:hover{
+    background:#FB8C00;
+}
+
+.logout{
+    margin-top:30px;
+    background:#E65100;
+    text-align:center;
+}
+
+.content{
+    margin-left:250px;
+    width:calc(100% - 250px);
+    padding:40px;
+}
+
+.card{
+
+    background:white;
+
+    border-radius:10px;
+
+    padding:25px;
+
+    box-shadow:0 3px 8px rgba(0,0,0,.1);
+
+    margin-bottom:30px;
+
+}
+
+input,select{
+
+    width:100%;
+
+    padding:10px;
+
+    margin-top:5px;
+
+    margin-bottom:15px;
+
+    border:1px solid #ddd;
+
+    border-radius:5px;
+
+    box-sizing:border-box;
+
+}
+
+button{
+
+    background:#FFA726;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 25px;
+
+    border-radius:5px;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+}
+
+button:hover{
+
+    background:#FB8C00;
+
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+table th{
+
+    background:#FFA726;
+
+    color:white;
+
+    padding:12px;
+
+}
+
+table td{
+
+    border:1px solid #ddd;
+
+    padding:10px;
+
+    text-align:center;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2>Putra Joyo Snack</h2>
+
+<hr>
+
+<a href="/gudang/dashboard">📊 Dashboard</a>
+
+<a href="/gudang/barang-masuk">📦 Barang Masuk</a>
+
+<a href="/gudang/laporan-stok">📋 Laporan Stok</a>
+
+<a href="/logout" class="logout">🚪 Logout</a>
+
+</div>
+
+<div class="content">
+
+<h1>Barang Masuk</h1>
+
+<div class="card">
+
+<form method="POST">
+
+<label>Barang</label>
+
+<select name="barang_id" required>
+
+<option value="">-- Pilih Barang --</option>
+
+{% for b in barang %}
+
+<option value="{{ b.id }}">
+
+{{ b.nama_barang }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+<label>Supplier</label>
+
+<input
+type="text"
+name="supplier"
+required>
+
+<label>Jumlah Masuk</label>
+
+<input
+type="number"
+name="jumlah"
+required>
+
+<label>Tanggal Masuk</label>
+
+<input
+type="date"
+name="tanggal_masuk"
+required>
+
+<label>Tanggal Kadaluarsa</label>
+
+<input
+type="date"
+name="tanggal_expired"
+required>
+
+<button type="submit">
+
+Simpan
+
+</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h2>Riwayat Barang Masuk</h2>
+
+<table>
+
+<tr>
+
+<th>ID</th>
+
+<th>Barang</th>
+
+<th>Supplier</th>
+
+<th>Jumlah</th>
+
+<th>Tanggal Masuk</th>
+
+<th>Kadaluarsa</th>
+
+</tr>
+
+{% for data in histori %}
+
+<tr>
+
+<td>{{ data.id }}</td>
+
+<td>{{ data.barang.nama_barang }}</td>
+
+<td>{{ data.supplier }}</td>
+
+<td>{{ data.jumlah }}</td>
+
+<td>{{ data.tanggal_masuk }}</td>
+
+<td>{{ data.tanggal_expired }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+</div>
+
+</body>
+</html>

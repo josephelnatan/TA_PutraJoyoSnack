@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Laporan Stok</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Segoe UI,Arial,sans-serif;
+    background:#FDFBF7;
+    display:flex;
+}
+
+.sidebar{
+
+    width:250px;
+
+    background:#FFA726;
+
+    color:white;
+
+    height:100vh;
+
+    position:fixed;
+
+    padding:20px;
+
+    box-sizing:border-box;
+
+}
+
+.sidebar h2{
+
+    text-align:center;
+
+}
+
+.sidebar a{
+
+    display:block;
+
+    text-decoration:none;
+
+    color:white;
+
+    padding:12px;
+
+    margin-bottom:8px;
+
+    border-radius:5px;
+
+    font-weight:bold;
+
+}
+
+.sidebar a:hover{
+
+    background:#FB8C00;
+
+}
+
+.logout{
+
+    background:#E65100;
+
+    margin-top:30px;
+
+    text-align:center;
+
+}
+
+.content{
+
+    margin-left:250px;
+
+    width:calc(100% - 250px);
+
+    padding:40px;
+
+}
+
+.card{
+
+    background:white;
+
+    padding:25px;
+
+    border-radius:10px;
+
+    box-shadow:0 3px 8px rgba(0,0,0,.1);
+
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+table th{
+
+    background:#FFA726;
+
+    color:white;
+
+    padding:12px;
+
+}
+
+table td{
+
+    padding:10px;
+
+    border:1px solid #ddd;
+
+    text-align:center;
+
+}
+
+.status-aman{
+
+    color:green;
+
+    font-weight:bold;
+
+}
+
+.status-tipis{
+
+    color:orange;
+
+    font-weight:bold;
+
+}
+
+.status-habis{
+
+    color:red;
+
+    font-weight:bold;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2>Putra Joyo Snack</h2>
+
+<hr>
+
+<a href="/gudang/dashboard">📊 Dashboard</a>
+
+<a href="/gudang/barang-masuk">📦 Barang Masuk</a>
+
+<a href="/gudang/laporan-stok">📋 Laporan Stok</a>
+
+<a href="/logout" class="logout">🚪 Logout</a>
+
+</div>
+
+<div class="content">
+
+<div class="card">
+
+<h2>Laporan Stok Barang</h2>
+
+<br>
+
+<table>
+
+<tr>
+
+<th>ID</th>
+
+<th>Nama Barang</th>
+
+<th>Harga</th>
+
+<th>Stok</th>
+
+<th>Status</th>
+
+</tr>
+
+{% for b in barang %}
+
+<tr>
+
+<td>{{ b.id }}</td>
+
+<td>{{ b.nama_barang }}</td>
+
+<td>Rp {{ "{:,}".format(b.harga) }}</td>
+
+<td>{{ b.stok }}</td>
+
+<td>
+
+{% if b.stok == 0 %}
+
+<span class="status-habis">
+
+🔴 Habis
+
+</span>
+
+{% elif b.stok <= 20 %}
+
+<span class="status-tipis">
+
+🟡 Menipis
+
+</span>
+
+{% else %}
+
+<span class="status-aman">
+
+🟢 Aman
+
+</span>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

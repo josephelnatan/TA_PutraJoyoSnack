@@ -1,6 +1,10 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 from config import Config
 from models.user import db, User
+from datetime import datetime
+from models.transaksi import Barang, BarangMasuk
+from sqlalchemy import func
+from datetime import datetime
 from models.transaksi import (
     Barang,
     BarangMasuk,
@@ -183,21 +187,85 @@ def kasir_pengiriman():
 # ==================== GUDANG ====================
 @app.route("/gudang/dashboard")
 def gudang_dashboard():
+
     if "user_id" not in session:
         return redirect("/login")
 
-    if session.get("role").lower() not in ["gudang", "staf gudang"]:
-        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+    # Barang masuk bulan ini
+    barang_masuk = BarangMasuk.query.filter(
+        func.month(BarangMasuk.tanggal_masuk) == datetime.now().month,
+        func.year(BarangMasuk.tanggal_masuk) == datetime.now().year
+    ).all()
 
-    return render_template("gudang/dashboard.html")
+    total_masuk = sum(x.jumlah for x in barang_masuk)
 
-@app.route("/gudang/barang-masuk")
+    # Total stok tersedia
+    total_stok = db.session.query(
+        func.sum(Barang.stok)
+    ).scalar() or 0
+
+    # Barang keluar bulan ini
+    detail = DetailTransaksi.query.all()
+
+    total_keluar = sum(x.qty for x in detail)
+
+    return render_template(
+        "gudang/dashboard.html",
+        total_masuk=total_masuk,
+        total_keluar=total_keluar,
+        total_stok=total_stok
+    )
+
+@app.route("/gudang/barang-masuk", methods=["GET", "POST"])
 def gudang_barang_masuk():
 
     if "user_id" not in session:
         return redirect("/login")
 
-    return render_template("gudang/barang_masuk.html")
+    if request.method == "POST":
+
+        barang_id = request.form["barang_id"]
+        supplier = request.form["supplier"]
+        jumlah = int(request.form["jumlah"])
+        tanggal_masuk = datetime.strptime(
+            request.form["tanggal_masuk"],
+            "%Y-%m-%d"
+        ).date()
+
+        tanggal_expired = datetime.strptime(
+            request.form["tanggal_expired"],
+            "%Y-%m-%d"
+        ).date()
+
+        data = BarangMasuk(
+            barang_id=barang_id,
+            supplier=supplier,
+            jumlah=jumlah,
+            tanggal_masuk=tanggal_masuk,
+            tanggal_expired=tanggal_expired,
+            gudang_id=session["user_id"]
+        )
+
+        db.session.add(data)
+
+        barang = Barang.query.get(barang_id)
+        barang.stok += jumlah
+
+        db.session.commit()
+
+        return redirect("/gudang/barang-masuk")
+
+    barang = Barang.query.all()
+
+    histori = BarangMasuk.query.order_by(
+        BarangMasuk.id.desc()
+    ).all()
+
+    return render_template(
+        "gudang/barang_masuk.html",
+        barang=barang,
+        histori=histori
+    )
 
 @app.route("/gudang/laporan-stok")
 def gudang_laporan_stok():
@@ -205,7 +273,12 @@ def gudang_laporan_stok():
     if "user_id" not in session:
         return redirect("/login")
 
-    return render_template("gudang/laporan_stok.html")
+    barang = Barang.query.all()
+
+    return render_template(
+        "gudang/laporan_stok.html",
+        barang=barang
+    )
 
 
 # ==================== LOGOUT ====================
