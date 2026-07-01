@@ -112,11 +112,17 @@
 
     <div class="header-main">
 
+    <div>
         <h1>Dashboard Staff Gudang</h1>
-
-        <div>Login sebagai : <strong>Staff Gudang</strong></div>
-
+        <p>{{ sekarang.strftime("%d-%m-%Y %H:%M") }}</p>
     </div>
+
+    <div style="text-align:right;">
+        <strong>{{ session.username }}</strong><br>
+        {{ session.role }}
+    </div>
+
+</div>
 
     <hr style="border:0;height:1px;background:#FFE0B2;margin:20px 0;">
 

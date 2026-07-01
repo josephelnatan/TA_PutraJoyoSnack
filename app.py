@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session, flash
 from config import Config
 from models.user import db, User
 from datetime import datetime
 from models.transaksi import Barang, BarangMasuk
 from sqlalchemy import func
 from datetime import datetime
-from models.transaksi import (
+from flask import flash
+from models.transaksi import (  
     Barang,
     BarangMasuk,
     Transaksi,
@@ -210,11 +211,12 @@ def gudang_dashboard():
     total_keluar = sum(x.qty for x in detail)
 
     return render_template(
-        "gudang/dashboard.html",
-        total_masuk=total_masuk,
-        total_keluar=total_keluar,
-        total_stok=total_stok
-    )
+    "gudang/dashboard.html",
+    total_masuk=total_masuk,
+    total_keluar=total_keluar,
+    total_stok=total_stok,
+    sekarang=datetime.now()
+)
 
 @app.route("/gudang/barang-masuk", methods=["GET", "POST"])
 def gudang_barang_masuk():
@@ -227,6 +229,16 @@ def gudang_barang_masuk():
         barang_id = request.form["barang_id"]
         supplier = request.form["supplier"]
         jumlah = int(request.form["jumlah"])
+            # Validasi jumlah
+    if jumlah <= 0:
+        flash("Jumlah barang harus lebih dari 0.", "error")
+        return redirect("/gudang/barang-masuk")
+
+# Validasi supplier
+    if supplier.strip() == "":
+        flash("Supplier tidak boleh kosong.", "error")
+        return redirect("/gudang/barang-masuk")
+
         tanggal_masuk = datetime.strptime(
             request.form["tanggal_masuk"],
             "%Y-%m-%d"
@@ -236,6 +248,11 @@ def gudang_barang_masuk():
             request.form["tanggal_expired"],
             "%Y-%m-%d"
         ).date()
+    # Validasi tanggal
+    if tanggal_expired < tanggal_masuk:
+        flash("Tanggal kadaluarsa tidak boleh sebelum tanggal masuk.", "error")
+        return redirect("/gudang/barang-masuk")
+        
 
         data = BarangMasuk(
             barang_id=barang_id,
@@ -252,7 +269,7 @@ def gudang_barang_masuk():
         barang.stok += jumlah
 
         db.session.commit()
-
+        flash("Barang masuk berhasil ditambahkan!", "success")
         return redirect("/gudang/barang-masuk")
 
     barang = Barang.query.all()
@@ -282,7 +299,7 @@ def hapus_barang_masuk(id):
     db.session.delete(data)
 
     db.session.commit()
-
+    flash("Data berhasil dihapus!", "success")
     return redirect("/gudang/barang-masuk")
 
 @app.route("/gudang/barang-masuk/edit/<int:id>", methods=["GET", "POST"])

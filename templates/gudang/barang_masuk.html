@@ -1,293 +1,318 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<title>Barang Masuk</title>
+    <title>Barang Masuk</title>
 
-<style>
+    <style>
 
-body{
-    font-family:'Segoe UI',Arial,sans-serif;
-    margin:0;
-    display:flex;
-    background:#FDFBF7;
-}
+    body{
+        font-family:'Segoe UI',Arial,sans-serif;
+        margin:0;
+        display:flex;
+        background:#FDFBF7;
+    }
 
-.sidebar{
-    width:250px;
-    background:#FFA726;
-    height:100vh;
-    color:white;
-    position:fixed;
-    padding:20px;
-    box-sizing:border-box;
-}
+    .sidebar{
+        width:250px;
+        background:#FFA726;
+        height:100vh;
+        color:white;
+        position:fixed;
+        padding:20px;
+        box-sizing:border-box;
+    }
 
-.sidebar h2{
-    text-align:center;
-}
+    .sidebar h2{
+        text-align:center;
+    }
 
-.sidebar a{
-    display:block;
-    text-decoration:none;
-    color:white;
-    padding:12px;
-    margin-bottom:8px;
-    border-radius:5px;
-    font-weight:bold;
-}
+    .sidebar a{
+        display:block;
+        text-decoration:none;
+        color:white;
+        padding:12px;
+        margin-bottom:8px;
+        border-radius:5px;
+        font-weight:bold;
+    }
 
-.sidebar a:hover{
-    background:#FB8C00;
-}
+    .sidebar a:hover{
+        background:#FB8C00;
+    }
 
-.logout{
-    margin-top:30px;
-    background:#E65100;
-    text-align:center;
-}
+    .logout{
+        margin-top:30px;
+        background:#E65100;
+        text-align:center;
+    }
 
-.content{
-    margin-left:250px;
-    width:calc(100% - 250px);
-    padding:40px;
-}
+    .content{
+        margin-left:250px;
+        width:calc(100% - 250px);
+        padding:40px;
+    }
 
-.card{
+    .card{
 
-    background:white;
+        background:white;
 
-    border-radius:10px;
+        border-radius:10px;
 
-    padding:25px;
+        padding:25px;
 
-    box-shadow:0 3px 8px rgba(0,0,0,.1);
+        box-shadow:0 3px 8px rgba(0,0,0,.1);
 
-    margin-bottom:30px;
+        margin-bottom:30px;
 
-}
+    }
 
-input,select{
+    input,select{
 
-    width:100%;
+        width:100%;
 
-    padding:10px;
+        padding:10px;
 
-    margin-top:5px;
+        margin-top:5px;
 
-    margin-bottom:15px;
+        margin-bottom:15px;
 
-    border:1px solid #ddd;
+        border:1px solid #ddd;
 
-    border-radius:5px;
+        border-radius:5px;
 
-    box-sizing:border-box;
+        box-sizing:border-box;
 
-}
+    }
 
-button{
+    button{
 
-    background:#FFA726;
+        background:#FFA726;
 
-    color:white;
+        color:white;
 
-    border:none;
+        border:none;
 
-    padding:12px 25px;
+        padding:12px 25px;
 
-    border-radius:5px;
+        border-radius:5px;
 
-    cursor:pointer;
+        cursor:pointer;
 
-    font-size:15px;
+        font-size:15px;
 
-}
+    }
 
-button:hover{
+    button:hover{
 
-    background:#FB8C00;
+        background:#FB8C00;
 
-}
+    }
 
-table{
+    table{
 
-    width:100%;
+        width:100%;
 
-    border-collapse:collapse;
+        border-collapse:collapse;
 
-}
+    }
 
-table th{
+    table th{
 
-    background:#FFA726;
+        background:#FFA726;
 
-    color:white;
+        color:white;
 
-    padding:12px;
+        padding:12px;
 
-}
+    }
 
-table td{
+    table td{
 
-    border:1px solid #ddd;
+        border:1px solid #ddd;
 
-    padding:10px;
+        padding:10px;
 
-    text-align:center;
+        text-align:center;
 
-}
+    }
 
-</style>
+    .flash{
+        padding:12px;
+        margin-bottom:20px;
+        border-radius:5px;
+        font-weight:bold;
+    }
 
-</head>
+    .success{
+        background:#d4edda;
+        color:#155724;
+    }
 
-<body>
+    .error{
+        background:#f8d7da;
+        color:#721c24;
+    }
+    </style>
+    </head>
 
-<div class="sidebar">
+    <body>
 
-<h2>Putra Joyo Snack</h2>
+    <div class="sidebar">
 
-<hr>
+    <h2>Putra Joyo Snack</h2>
 
-<a href="/gudang/dashboard">📊 Dashboard</a>
+    <hr>
 
-<a href="/gudang/barang-masuk">📦 Barang Masuk</a>
+    <a href="/gudang/dashboard">📊 Dashboard</a>
 
-<a href="/gudang/laporan-stok">📋 Laporan Stok</a>
+    <a href="/gudang/barang-masuk">📦 Barang Masuk</a>
 
-<a href="/logout" class="logout">🚪 Logout</a>
+    <a href="/gudang/laporan-stok">📋 Laporan Stok</a>
 
-</div>
+    <a href="/logout" class="logout">🚪 Logout</a>
 
-<div class="content">
+    </div>
 
-<h1>Barang Masuk</h1>
+    <div class="content">
 
-<div class="card">
+    <h1>Barang Masuk</h1>
 
-<form method="POST">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-<label>Barang</label>
+    <div class="card">
 
-<select name="barang_id" required>
+    <form method="POST">
 
-<option value="">-- Pilih Barang --</option>
+    <label>Barang</label>
 
-{% for b in barang %}
+    <select name="barang_id" required>
 
-<option value="{{ b.id }}">
+    <option value="">-- Pilih Barang --</option>
 
-{{ b.nama_barang }}
+    {% for b in barang %}
 
-</option>
+    <option value="{{ b.id }}">
 
-{% endfor %}
+    {{ b.nama_barang }}
 
-</select>
+    </option>
 
-<label>Supplier</label>
+    {% endfor %}
 
-<input
-type="text"
-name="supplier"
-required>
+    </select>
 
-<label>Jumlah Masuk</label>
+    <label>Supplier</label>
 
-<input
-type="number"
-name="jumlah"
-required>
+    <input
+    type="text"
+    name="supplier"
+    required>
 
-<label>Tanggal Masuk</label>
+    <label>Jumlah Masuk</label>
 
-<input
-type="date"
-name="tanggal_masuk"
-required>
+    <input
+    type="number"
+    name="jumlah"
+    required>
 
-<label>Tanggal Kadaluarsa</label>
+    <label>Tanggal Masuk</label>
 
-<input
-type="date"
-name="tanggal_expired"
-required>
+    <input
+    type="date"
+    name="tanggal_masuk"
+    required>
 
-<button type="submit">
+    <label>Tanggal Kadaluarsa</label>
 
-Simpan
+    <input
+    type="date"
+    name="tanggal_expired"
+    required>
 
-</button>
+    <button type="submit">
 
-</form>
+    Simpan
 
-</div>
+    </button>
 
-<div class="card">
+    </form>
 
-<h2>Riwayat Barang Masuk</h2>
+    </div>
 
-<table>
+    <div class="card">
 
-<tr>
+    <h2>Riwayat Barang Masuk</h2>
 
-<th>ID</th>
+    <table>
 
-<th>Barang</th>
+    <tr>
 
-<th>Supplier</th>
+    <th>ID</th>
 
-<th>Jumlah</th>
+    <th>Barang</th>
 
-<th>Tanggal Masuk</th>
+    <th>Supplier</th>
 
-<th>Kadaluarsa</th>
-<th>Aksi</th>
+    <th>Jumlah</th>
 
-</tr>
+    <th>Tanggal Masuk</th>
 
-{% for data in histori %}
+    <th>Kadaluarsa</th>
+    <th>Aksi</th>
 
-<tr>
+    </tr>
 
-<td>{{ data.id }}</td>
+    {% for data in histori %}
 
-<td>{{ data.barang.nama_barang }}</td>
+    <tr>
 
-<td>{{ data.supplier }}</td>
+    <td>{{ data.id }}</td>
 
-<td>{{ data.jumlah }}</td>
+    <td>{{ data.barang.nama_barang }}</td>
 
-<td>{{ data.tanggal_masuk }}</td>
+    <td>{{ data.supplier }}</td>
 
-<td>{{ data.tanggal_expired }}</td>
+    <td>{{ data.jumlah }}</td>
 
-<td>
+    <td>{{ data.tanggal_masuk }}</td>
 
-<a href="/gudang/barang-masuk/edit/{{ data.id }}">
-    Edit
-</a>
+    <td>{{ data.tanggal_expired }}</td>
 
-|
+    <td>
 
-<a href="/gudang/barang-masuk/hapus/{{ data.id }}"
-onclick="return confirm('Yakin ingin menghapus data ini?')">
-    Hapus
-</a>
+    <a href="/gudang/barang-masuk/edit/{{ data.id }}">
+        Edit
+    </a>
 
-</td>
+    |
 
-</tr>
+    <a href="/gudang/barang-masuk/hapus/{{ data.id }}"
+    onclick="return confirm('Yakin ingin menghapus data ini?')">
+        Hapus
+    </a>
 
-{% endfor %}
+    </td>
 
-</table>
+    </tr>
 
-</div>
+    {% endfor %}
 
-</div>
+    </table>
 
-</body>
-</html>
+    </div>
+
+    </div>
+
+    </body>
+    </html>
