@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Edit Barang Masuk</title>
+
+<style>
+
+body{
+    font-family:Segoe UI;
+    background:#F5F5F5;
+}
+
+.container{
+
+    width:500px;
+
+    margin:40px auto;
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:10px;
+
+}
+
+input,select{
+
+    width:100%;
+
+    padding:10px;
+
+    margin-top:5px;
+
+    margin-bottom:15px;
+
+}
+
+button{
+
+    padding:10px 20px;
+
+    border:none;
+
+    cursor:pointer;
+
+    background:#FFA726;
+
+    color:white;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Edit Barang Masuk</h2>
+
+<form method="POST">
+
+<label>Barang</label>
+
+<select name="barang_id">
+
+{% for barang in barang_list %}
+
+<option
+value="{{ barang.id }}"
+{% if barang.id == data.barang_id %}selected{% endif %}>
+
+{{ barang.nama_barang }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+<label>Supplier</label>
+
+<input
+type="text"
+name="supplier"
+value="{{ data.supplier }}"
+required>
+
+<label>Jumlah</label>
+
+<input
+type="number"
+name="jumlah"
+value="{{ data.jumlah }}"
+required>
+
+<label>Tanggal Masuk</label>
+
+<input
+type="date"
+name="tanggal_masuk"
+value="{{ data.tanggal_masuk }}"
+required>
+
+<label>Tanggal Expired</label>
+
+<input
+type="date"
+name="tanggal_expired"
+value="{{ data.tanggal_expired }}"
+required>
+
+<button type="submit">
+
+Update
+
+</button>
+
+</form>
+
+</div>
+
+</body>
+
+</html>

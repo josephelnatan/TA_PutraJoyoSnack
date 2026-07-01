@@ -267,17 +267,83 @@ def gudang_barang_masuk():
         histori=histori
     )
 
+@app.route("/gudang/barang-masuk/hapus/<int:id>")
+def hapus_barang_masuk(id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    data = BarangMasuk.query.get_or_404(id)
+
+    barang = Barang.query.get(data.barang_id)
+
+    barang.stok -= data.jumlah
+
+    db.session.delete(data)
+
+    db.session.commit()
+
+    return redirect("/gudang/barang-masuk")
+
+@app.route("/gudang/barang-masuk/edit/<int:id>", methods=["GET", "POST"])
+def edit_barang_masuk(id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    data = BarangMasuk.query.get_or_404(id)
+
+    if request.method == "POST":
+
+        # Barang lama
+        barang_lama = Barang.query.get(data.barang_id)
+
+        # Kembalikan stok lama
+        barang_lama.stok -= data.jumlah
+
+        # Ambil data baru
+        barang_baru = Barang.query.get(int(request.form["barang_id"]))
+
+        data.barang_id = barang_baru.id
+        data.supplier = request.form["supplier"]
+        data.jumlah = int(request.form["jumlah"])
+        data.tanggal_masuk = request.form["tanggal_masuk"]
+        data.tanggal_expired = request.form["tanggal_expired"]
+
+        # Tambahkan stok baru
+        barang_baru.stok += data.jumlah
+
+        db.session.commit()
+
+        return redirect("/gudang/barang-masuk")
+
+    barang_list = Barang.query.all()
+
+    return render_template(
+        "gudang/edit_barang_masuk.html",
+        data=data,
+        barang_list=barang_list
+    )
+
 @app.route("/gudang/laporan-stok")
 def gudang_laporan_stok():
 
     if "user_id" not in session:
         return redirect("/login")
 
-    barang = Barang.query.all()
+    keyword = request.args.get("keyword", "")
+
+    if keyword:
+        barang = Barang.query.filter(
+            Barang.nama_barang.like(f"%{keyword}%")
+        ).all()
+    else:
+        barang = Barang.query.all()
 
     return render_template(
         "gudang/laporan_stok.html",
-        barang=barang
+        barang=barang,
+        keyword=keyword
     )
 
 

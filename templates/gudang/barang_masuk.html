@@ -244,6 +244,7 @@ Simpan
 <th>Tanggal Masuk</th>
 
 <th>Kadaluarsa</th>
+<th>Aksi</th>
 
 </tr>
 
@@ -262,6 +263,21 @@ Simpan
 <td>{{ data.tanggal_masuk }}</td>
 
 <td>{{ data.tanggal_expired }}</td>
+
+<td>
+
+<a href="/gudang/barang-masuk/edit/{{ data.id }}">
+    Edit
+</a>
+
+|
+
+<a href="/gudang/barang-masuk/hapus/{{ data.id }}"
+onclick="return confirm('Yakin ingin menghapus data ini?')">
+    Hapus
+</a>
+
+</td>
 
 </tr>
 

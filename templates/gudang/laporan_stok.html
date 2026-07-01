@@ -177,6 +177,28 @@ table td{
 <h2>Laporan Stok Barang</h2>
 
 <br>
+<form method="GET">
+
+    <input
+        type="text"
+        name="keyword"
+        placeholder="Cari nama barang..."
+        value="{{ keyword }}"
+    >
+
+    <button type="submit">
+        Cari
+    </button>
+
+    <a href="/gudang/laporan-stok">
+        <button type="button">
+            Reset
+        </button>
+    </a>
+
+</form>
+
+<br>
 
 <table>
 
