@@ -8,6 +8,38 @@ class Barang(db.Model):
     harga = db.Column(db.Integer, nullable=False)
     stok = db.Column(db.Integer, nullable=False)
 
+class BarangMasuk(db.Model):
+    __tablename__ = "barang_masuk"
+    id = db.Column(db.Integer, primary_key=True)
+    barang_id = db.Column(
+        db.Integer,
+        db.ForeignKey("barang.id"),
+        nullable=False
+    )
+    supplier = db.Column(
+        db.String(100),
+        nullable=False
+    )
+    jumlah = db.Column(
+        db.Integer,
+        nullable=False
+    )
+    tanggal_masuk = db.Column(
+        db.Date,
+        nullable=False
+    )
+    tanggal_expired = db.Column(
+        db.Date,
+        nullable=False
+    )
+    gudang_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False
+    )
+    barang = db.relationship("Barang")
+    gudang = db.relationship("User")
+
 class Transaksi(db.Model):
     __tablename__ = 'transaksi'
     id = db.Column(db.Integer, primary_key=True)

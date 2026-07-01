@@ -1,7 +1,15 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 from config import Config
 from models.user import db, User
-from models.transaksi import Barang, Transaksi, DetailTransaksi, Retur, Pengiriman
+from models.transaksi import (
+    Barang,
+    BarangMasuk,
+    Transaksi,
+    DetailTransaksi,
+    Retur,
+    Pengiriman
+)
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -177,9 +185,27 @@ def kasir_pengiriman():
 def gudang_dashboard():
     if "user_id" not in session:
         return redirect("/login")
+
     if session.get("role").lower() not in ["gudang", "staf gudang"]:
         return "Akses Ditolak: Anda bukan Staff Gudang", 403
-    return render_template("utama/index.html", mode="gudang")
+
+    return render_template("gudang/dashboard.html")
+
+@app.route("/gudang/barang-masuk")
+def gudang_barang_masuk():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    return render_template("gudang/barang_masuk.html")
+
+@app.route("/gudang/laporan-stok")
+def gudang_laporan_stok():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    return render_template("gudang/laporan_stok.html")
 
 
 # ==================== LOGOUT ====================
