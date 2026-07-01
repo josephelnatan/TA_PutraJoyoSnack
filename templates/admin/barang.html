@@ -11,21 +11,41 @@
         .sidebar a:hover { background-color: #FB8C00; }
         .sidebar .logout-btn { background-color: #E65100; margin-top: 30px; text-align: center; }
         .content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); box-sizing: border-box; }
+        
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-add { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-add { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .btn-add:hover { background-color: #45a049; }
+        
         .search-container { background-color: #FFF8E1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #FFCC80; display: flex; align-items: center; gap: 10px; }
         .search-container input { padding: 8px; border: 1px solid #FFCC80; border-radius: 4px; width: 250px; }
-        .data-table { width: 100%; border-collapse: collapse; background: white; }
-        .data-table th, .data-table td { border: 1px solid #FFE0B2; padding: 12px; text-align: left; }
+        
+        .data-table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .data-table th, .data-table td { border: 1px solid #FFE0B2; padding: 12px; text-align: left; font-size: 14px; }
         .data-table th { background-color: #FFA726; color: white; }
         .data-table tr:nth-child(even) { background-color: #FFFDE7; }
-        .btn-delete { background-color: #EF5350; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-delete:hover { background-color: #D32F2F; }
+        
+        /* Badge Status Rekomendasi Tambahan */
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-warning { background-color: #FFE0B2; color: #E65100; }
+        .badge-danger { background-color: #FFCDD2; color: #C62828; }
+        .badge-safe { background-color: #C8E6C9; color: #2E7D32; }
+
+        /* Modal Pop-up Form Tambah Barang */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); padding-top: 40px; }
+        .modal-content { background-color: white; margin: auto; padding: 25px; border: 2px solid #FFA726; width: 450px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .modal-content h3 { color: #E65100; margin-top: 0; margin-bottom: 15px; text-align: center; }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 13px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid #FFCC80; border-radius: 6px; box-sizing: border-box; background-color: #FFFDE7; }
+        .form-row { display: flex; gap: 10px; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-save { background-color: #FFA726; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background-color: #9E9E9E; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
+    <!-- Sidebar Menu -->
     <div class="sidebar">
         <h2>Putra Joyo Snack</h2>
         <hr style="border: 0; height: 1px; background: #FFE0B2; margin-bottom: 20px;">
@@ -37,29 +57,121 @@
         <a class="logout-btn" href="/logout">🚪 Logout</a>
     </div>
 
+    <!-- Konten Utama -->
     <div class="content">
         <div class="header-section">
-            <h1>Data Barang</h1>
-            <button class="btn-add">+ Tambah Barang</button> </div>
-
-        <div class="search-container">
-            <label><strong>Cari Barang:</strong></label> <input type="text" placeholder="Ketik nama snack...">
+            <h1>Master Data Stok Barang</h1>
+            <button class="btn-add" onclick="bukaModal()">+ Tambah Stok Baru</button>
         </div>
 
+        <div class="search-container">
+            <label><strong>Cari Snack:</strong></label>
+            <input type="text" placeholder="Masukkan nama barang...">
+        </div>
+
+        <!-- TABEL DATA BARANG TERBARU SESUAI REKOMENDASI DOSEN -->
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>ID</th> <th>Nama</th> <th>Harga</th> <th>Stok</th> <th>Aksi</th>
+                    <th>ID</th>
+                    <th>Nama Barang</th>
+                    <th>Harga</th>
+                    <th>Stok Saat Ini</th>
+                    <th>Satuan</th> <!-- Saran Dosen: Tambah Satuan -->
+                    <th>Tgl Masuk</th> <!-- Saran Dosen: Tanggal Masuk Stok -->
+                    <th>Kadaluarsa</th> <!-- Saran Dosen: Kadaluarsa -->
+                    <th>Diinput Oleh</th> <!-- Saran Dosen: id admin fk -->
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>BR01</td> <td>Waffer</td> <td>25.000</td> <td>15</td> <td>
-                        <button class="btn-delete">Hapus Barang</button> </td>
+                    <td>BR01</td>
+                    <td>Keripik Singkong Pedas</td>
+                    <td>15.000</td>
+                    <td>8 <span class="badge badge-warning">Menipis</span></td>
+                    <td>Pcs</td>
+                    <td>25-06-2026</td>
+                    <td>25-12-2026</td>
+                    <td>ADM01 (Anda)</td>
+                    <td><button style="background-color:#EF5350; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Hapus</button></td>
+                </tr>
+                <tr>
+                    <td>BR02</td>
+                    <td>Lanting Bumbu Bawang</td>
+                    <td>22.000</td>
+                    <td>50 <span class="badge badge-safe">Aman</span></td>
+                    <td>Pack</td>
+                    <td>28-06-2026</td>
+                    <td>15-08-2026 <span class="badge badge-danger">Hampir Expired</span></td>
+                    <td>ADM01 (Anda)</td>
+                    <td><button style="background-color:#EF5350; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Hapus</button></td>
                 </tr>
             </tbody>
         </table>
     </div>
+
+    <!-- MODAL POP-UP FORM TAMBAH BARANG SESUAI KRITERIA DOSEN -->
+    <div id="modalBarang" class="modal">
+        <div class="modal-content">
+            <h3>Input Stok Barang Baru</h3>
+            <form method="POST" action="/admin/barang">
+                
+                <div class="form-group">
+                    <label>Nama Barang :</label>
+                    <input type="text" name="nama_barang" placeholder="Contoh: Keripik Basreng" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Harga Jual (Rp) :</label>
+                    <input type="number" name="harga" placeholder="Contoh: 15000" required>
+                </div>
+
+                <!-- Pembagian Baris untuk Jumlah Stok & Satuan (Saran Dosen) -->
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Jumlah Stok :</label>
+                        <input type="number" name="stok" placeholder="Mulai dari 1" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Satuan :</label>
+                        <select name="satuan" required>
+                            <option value="Pcs">Pcs (Satuan)</option>
+                            <option value="Pack">Pack</option>
+                            <option value="Bal">Bal (Grosir)</option>
+                            <option value="Dus">Dus</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input Tanggal Masuk & Kadaluarsa (Saran Dosen) -->
+                <div class="form-group">
+                    <label>Tanggal Masuk Stok :</label>
+                    <input type="date" name="tanggal_masuk" value="2026-06-29" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tanggal Kadaluarsa (Expired) :</label>
+                    <input type="date" name="tanggal_kadaluarsa" required>
+                </div>
+
+                <div class="form-group" style="opacity: 0.7;">
+                    <label>Otoritas Penginput :</label>
+                    <input type="text" value="Otomatis merekam ID Admin Anda saat ini" disabled style="background-color: #E0E0E0;">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-save">Simpan ke Gudang</button>
+                    <button type="button" class="btn-cancel" onclick="tutupModal()">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function bukaModal() { document.getElementById("modalBarang").style.display = "block"; }
+        function tutupModal() { document.getElementById("modalBarang").style.display = "none"; }
+    </script>
 
 </body>
 </html>

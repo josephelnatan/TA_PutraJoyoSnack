@@ -42,7 +42,6 @@
 </head>
 <body>
 
-    <!-- Sidebar Menu -->
     <div class="sidebar">
         <h2>Putra Joyo Snack</h2>
         <hr style="border: 0; height: 1px; background: #FFE0B2; margin-bottom: 20px;">
@@ -54,7 +53,6 @@
         <a class="logout-btn" href="/logout">🚪 Logout</a>
     </div>
 
-    <!-- Konten Utama -->
     <div class="content">
         <div class="header-section">
             <h1>Data User</h1>
@@ -76,27 +74,24 @@
                 </tr>
             </thead>
             <tbody>
+                {% for user in users %}
                 <tr>
-                    <td>KR01</td>
-                    <td>Brendan</td>
-                    <td>Kasir</td>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
                     <td>
                         <button class="btn-delete">Hapus User</button>
                     </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- MODAL POP-UP TAMBAH USER -->
     <div id="modalUser" class="modal">
         <div class="modal-content">
             <h3>Tambah User</h3>
             <form method="POST" action="/admin/user">
-                <div class="form-group">
-                    <label>ID User :</label>
-                    <input type="text" name="id_user" placeholder="Contoh: KR02" required>
-                </div>
                 <div class="form-group">
                     <label>Username :</label>
                     <input type="text" name="username" placeholder="Masukkan nama user..." required>

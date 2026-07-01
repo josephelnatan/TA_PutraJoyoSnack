@@ -55,7 +55,7 @@
             font-size: 14px;
         }
 
-        .form-group input, .form-group select {
+        .form-group input {
             width: 100%;
             padding: 12px;
             border: 2px solid #FFE0B2;
@@ -68,7 +68,7 @@
         }
 
         /* Efek saat Input diklik */
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus {
             outline: none;
             border-color: #FB8C00;
             background-color: #ffffff;
@@ -117,6 +117,7 @@
         <h2>PUTRA JOYO SNACK</h2>
         <p>Sistem Informasi Toko Snack</p>
         
+        <!-- Peringatan Otomatis dari Flask jika password salah -->
         {% if error %}
         <div class="error-alert">
             ⚠️ {{ error }}
@@ -124,25 +125,19 @@
         {% endif %}
 
         <form method="POST" action="/login">
+            <!-- Input Username -->
             <div class="form-group">
                 <label>Username :</label>
                 <input type="text" name="username" placeholder="Ketik nama user..." required>
             </div>
 
+            <!-- Input Password -->
             <div class="form-group">
                 <label>Password :</label>
                 <input type="password" name="password" placeholder="Ketik password..." required>
             </div>
 
-            <div class="form-group">
-                <label>Pilih Hak Akses (Role) :</label>
-                <select name="role" required>
-                    <option value="Admin">Admin</option>
-                    <option value="Kasir">Kasir</option>
-                    <option value="Staf Gudang">Staf Gudang</option>
-                </select>
-            </div>
-
+            <!-- Tombol Login -->
             <button type="submit" class="btn-submit">Masuk Ke Sistem</button>
         </form>
     </div>
