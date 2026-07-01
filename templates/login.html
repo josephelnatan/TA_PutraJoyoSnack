@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PUTRA JOYO SNACK — Login</title>
     <style>
-        /* Gaya Tampilan Belakang (Background Gradasi Oranye) */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #FFB74D 0%, #FFA726 50%, #FB8C00 100%);
@@ -15,8 +14,6 @@
             justify-content: center;
             align-items: center;
         }
-
-        /* Kotak Login Modern */
         .login-card {
             background: #ffffff;
             padding: 40px 30px;
@@ -26,7 +23,6 @@
             box-sizing: border-box;
             text-align: center;
         }
-
         .login-card h2 {
             margin: 0 0 5px 0;
             color: #E65100;
@@ -34,19 +30,15 @@
             font-weight: 800;
             letter-spacing: 0.5px;
         }
-
         .login-card p {
             margin: 0 0 30px 0;
             color: #777;
             font-size: 14px;
         }
-
-        /* Group Input Form */
         .form-group {
             text-align: left;
             margin-bottom: 20px;
         }
-
         .form-group label {
             display: block;
             margin-bottom: 8px;
@@ -54,8 +46,7 @@
             font-weight: 600;
             font-size: 14px;
         }
-
-        .form-group input, .form-group select {
+        .form-group input {
             width: 100%;
             padding: 12px;
             border: 2px solid #FFE0B2;
@@ -66,16 +57,12 @@
             color: #333;
             transition: all 0.3s ease;
         }
-
-        /* Efek saat Input diklik */
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus {
             outline: none;
             border-color: #FB8C00;
             background-color: #ffffff;
             box-shadow: 0 0 8px rgba(251, 140, 0, 0.2);
         }
-
-        /* Tombol Login Keren */
         .btn-submit {
             background: linear-gradient(90deg, #FFA726, #FB8C00);
             color: white;
@@ -90,14 +77,11 @@
             transition: all 0.3s ease;
             margin-top: 10px;
         }
-
         .btn-submit:hover {
             background: linear-gradient(90deg, #FB8C00, #E65100);
             box-shadow: 0 7px 20px rgba(230, 81, 0, 0.4);
             transform: translateY(-1px);
         }
-
-        /* Notifikasi Alert Merah Jika Salah Password */
         .error-alert {
             background-color: #FFEBEE;
             color: #D32F2F;
@@ -132,15 +116,6 @@
             <div class="form-group">
                 <label>Password :</label>
                 <input type="password" name="password" placeholder="Ketik password..." required>
-            </div>
-
-            <div class="form-group">
-                <label>Pilih Hak Akses (Role) :</label>
-                <select name="role" required>
-                    <option value="Admin">Admin</option>
-                    <option value="Kasir">Kasir</option>
-                    <option value="Staf Gudang">Staf Gudang</option>
-                </select>
             </div>
 
             <button type="submit" class="btn-submit">Masuk Ke Sistem</button>

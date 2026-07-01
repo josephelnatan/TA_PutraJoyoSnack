@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, jsonify
 from config import Config
 from models.user import db, User
 from datetime import datetime
@@ -44,6 +44,7 @@ def login():
             session["user_id"] = user.id
             session["username"] = user.username
             session["role"] = user.role
+             
 
             if user.role.lower() == "admin":
                 return redirect("/admin/dashboard")
@@ -161,6 +162,22 @@ def kasir_retur():
 
     retur_list = Retur.query.order_by(Retur.tanggal.desc()).all()
     return render_template("kasir/retur.html", retur_list=retur_list)
+@app.route("/kasir/retur/update-status", methods=["POST"])
+def update_status_retur():
+    if "user_id" not in session:
+        return redirect("/login")
+    
+    data = request.get_json()
+    id_retur = data.get("id_retur")
+    status_baru = data.get("status")
+
+    retur = Retur.query.filter_by(id_retur=id_retur).first()
+    if not retur:
+        return jsonify({"error": "Retur tidak ditemukan"}), 404
+    
+    retur.status = status_baru
+    db.session.commit()
+    return jsonify({"success": True})
 
 @app.route("/kasir/pengiriman", methods=["GET", "POST"])
 def kasir_pengiriman():
