@@ -1,6 +1,8 @@
 import unittest
 
 from app import app, db, Barang
+from models.pengiriman import Pengiriman
+from models.user import User
 
 
 class AppFlowTests(unittest.TestCase):
@@ -76,6 +78,106 @@ class AppFlowTests(unittest.TestCase):
             self.assertEqual(updated.harga, 15000)
             self.assertEqual(updated.stok, 8)
             self.assertEqual(updated.satuan, "Pack")
+
+    def test_admin_dashboard_shows_real_summary(self):
+        with self.app.app_context():
+            Barang.query.delete()
+            User.query.delete()
+            db.session.commit()
+
+            db.session.add(User(username="admin", password="admin", role="admin"))
+            db.session.add(Barang(nama_barang="Keripik", harga=12000, stok=2, satuan="Pcs", tanggal_masuk="2026-07-01", tanggal_kadaluarsa="2026-08-01", id_admin_fk="admin"))
+            db.session.add(Barang(nama_barang="Kacang", harga=8000, stok=8, satuan="Pack", tanggal_masuk="2026-07-02", tanggal_kadaluarsa="2026-09-01", id_admin_fk="admin"))
+            db.session.commit()
+
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "admin"
+            sess["role"] = "admin"
+
+        response = self.client.get("/admin/dashboard")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Total Barang", response.data)
+        self.assertIn(b"Stok Menipis", response.data)
+        self.assertIn(b"Keripik", response.data)
+
+    def test_kasir_can_add_pengiriman(self):
+        with self.app.app_context():
+            Pengiriman.query.delete()
+            db.session.commit()
+
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "kasir"
+            sess["role"] = "kasir"
+
+        response = self.client.post(
+            "/kasir/pengiriman",
+            data={
+                "no_pengiriman": "PG004",
+                "tanggal_input": "2026-07-01",
+                "nama_penerima": "Pak Damar",
+                "barang": "Kacang",
+                "jumlah": "15",
+                "status": "Diproses",
+            },
+            follow_redirects=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.app.app_context():
+            saved = Pengiriman.query.filter_by(no_pengiriman="PG004").first()
+            self.assertIsNotNone(saved)
+            self.assertEqual(saved.nama_penerima, "Pak Damar")
+            self.assertEqual(saved.jumlah, 15)
+
+    def test_kasir_can_edit_and_delete_pengiriman(self):
+        with self.app.app_context():
+            Pengiriman.query.delete()
+            db.session.commit()
+            pengiriman = Pengiriman(
+                no_pengiriman="PG005",
+                tanggal_input="01-07-2026",
+                nama_penerima="Pak Rudi",
+                barang="Kacang",
+                jumlah=8,
+                status="Diproses",
+            )
+            db.session.add(pengiriman)
+            db.session.commit()
+            item_id = pengiriman.id
+
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "kasir"
+            sess["role"] = "kasir"
+
+        edit_response = self.client.post(
+            f"/kasir/pengiriman/edit/{item_id}",
+            data={
+                "no_pengiriman": "PG005",
+                "tanggal_input": "2026-07-02",
+                "nama_penerima": "Pak Rudi Baru",
+                "barang": "Kacang Salted",
+                "jumlah": "10",
+                "status": "Dikirim",
+            },
+            follow_redirects=True,
+        )
+        self.assertEqual(edit_response.status_code, 200)
+
+        with self.app.app_context():
+            updated = Pengiriman.query.get(item_id)
+            self.assertEqual(updated.nama_penerima, "Pak Rudi Baru")
+            self.assertEqual(updated.barang, "Kacang Salted")
+            self.assertEqual(updated.status, "Dikirim")
+
+        delete_response = self.client.get(f"/kasir/pengiriman/hapus/{item_id}", follow_redirects=True)
+        self.assertEqual(delete_response.status_code, 200)
+
+        with self.app.app_context():
+            self.assertIsNone(Pengiriman.query.get(item_id))
 
 
 if __name__ == "__main__":

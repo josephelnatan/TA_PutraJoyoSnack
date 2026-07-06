@@ -59,10 +59,11 @@
             <button class="btn-add" onclick="bukaModal()">+ Tambah User</button>
         </div>
 
-        <div class="search-container">
+        <form class="search-container" method="get" action="/admin/user">
             <label><strong>Cari User:</strong></label>
-            <input type="text" placeholder="Ketik nama karyawan...">
-        </div>
+            <input type="text" name="q" value="{{ search_query or '' }}" placeholder="Ketik nama karyawan...">
+            <button class="btn-add" type="submit">Cari</button>
+        </form>
 
         <table class="data-table">
             <thead>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Pengiriman</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #FFF8E1; color: #333; }
+        .container { max-width: 520px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #E65100; margin-top: 0; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #FFCC80; border-radius: 6px; box-sizing: border-box; }
+        .actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-save { background: #FFA726; color: white; }
+        .btn-cancel { background: #9E9E9E; color: white; text-decoration: none; display: inline-block; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Edit Pengiriman</h2>
+        <form method="POST" action="/kasir/pengiriman/edit/{{ pengiriman.id }}">
+            <div class="form-group">
+                <label>No Pengiriman</label>
+                <input type="text" name="no_pengiriman" value="{{ pengiriman.no_pengiriman }}" required>
+            </div>
+            <div class="form-group">
+                <label>Tanggal Input</label>
+                <input type="date" name="tanggal_input" value="{{ pengiriman.tanggal_input }}">
+            </div>
+            <div class="form-group">
+                <label>Nama Penerima</label>
+                <input type="text" name="nama_penerima" value="{{ pengiriman.nama_penerima }}" required>
+            </div>
+            <div class="form-group">
+                <label>Barang</label>
+                <input type="text" name="barang" value="{{ pengiriman.barang }}" required>
+            </div>
+            <div class="form-group">
+                <label>Jumlah</label>
+                <input type="number" name="jumlah" min="1" value="{{ pengiriman.jumlah }}" required>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="Diproses" {% if pengiriman.status == 'Diproses' %}selected{% endif %}>Diproses</option>
+                    <option value="Dikirim" {% if pengiriman.status == 'Dikirim' %}selected{% endif %}>Dikirim</option>
+                    <option value="Sampai" {% if pengiriman.status == 'Sampai' %}selected{% endif %}>Sampai</option>
+                </select>
+            </div>
+            <div class="actions">
+                <button class="btn btn-save" type="submit">Simpan</button>
+                <a class="btn btn-cancel" href="/kasir/pengiriman">Batal</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

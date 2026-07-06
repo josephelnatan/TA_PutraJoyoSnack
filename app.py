@@ -10,6 +10,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from models.user import db, User
+from models.pengiriman import Pengiriman
 
 app = Flask(__name__)
 
@@ -81,7 +82,20 @@ def admin_dashboard():
     if (session.get("role") or "").lower() != "admin":
         return "Akses Ditolak: Anda bukan Admin", 403
 
-    return render_template("admin/dashboard.html")
+    total_barang = Barang.query.count()
+    total_stok = Barang.query.with_entities(db.func.sum(Barang.stok)).scalar() or 0
+    total_nilai_stok = sum(item.harga * item.stok for item in Barang.query.all())
+    stok_menipis = Barang.query.filter(Barang.stok <= 5).order_by(Barang.stok).all()
+    barang_terbaru = Barang.query.order_by(Barang.id.desc()).limit(5).all()
+
+    return render_template(
+        "admin/dashboard.html",
+        total_barang=total_barang,
+        total_stok=total_stok,
+        total_nilai_stok=total_nilai_stok,
+        stok_menipis=stok_menipis,
+        barang_terbaru=barang_terbaru,
+    )
 
 
 @app.route("/admin/barang", methods=["GET", "POST"])
@@ -110,8 +124,13 @@ def admin_barang():
             db.session.commit()
         return redirect(url_for("admin_barang"))
 
-    barang_list = Barang.query.order_by(Barang.id.desc()).all()
-    return render_template("admin/barang.html", barang_list=barang_list)
+    search_query = request.args.get("q", "").strip()
+    query = Barang.query
+    if search_query:
+        query = query.filter(Barang.nama_barang.ilike(f"%{search_query}%"))
+
+    barang_list = query.order_by(Barang.id.desc()).all()
+    return render_template("admin/barang.html", barang_list=barang_list, search_query=search_query)
 
 
 @app.route("/admin/barang/hapus/<int:item_id>")
@@ -155,8 +174,16 @@ def admin_user():
 
         return redirect(url_for("admin_user"))
 
-    users = User.query.order_by(User.id).all()
-    return render_template("admin/user.html", users=users)
+    search_query = request.args.get("q", "").strip()
+    query = User.query
+    if search_query:
+        query = query.filter(
+            User.username.ilike(f"%{search_query}%")
+            | User.role.ilike(f"%{search_query}%")
+        )
+
+    users = query.order_by(User.id).all()
+    return render_template("admin/user.html", users=users, search_query=search_query)
 
 
 @app.route("/admin/laporan")
@@ -348,7 +375,7 @@ def kasir_retur():
     return render_template("kasir/retur.html")
 
 
-@app.route("/kasir/pengiriman")
+@app.route("/kasir/pengiriman", methods=["GET", "POST"])
 def kasir_pengiriman():
     if "user_id" not in session:
         return redirect("/login")
@@ -356,7 +383,96 @@ def kasir_pengiriman():
     if (session.get("role") or "").lower() != "kasir":
         return "Akses Ditolak: Anda bukan Kasir", 403
 
-    return render_template("kasir/pengiriman.html")
+    if request.method == "POST":
+        no_pengiriman = request.form.get("no_pengiriman", "").strip()
+        tanggal_input = request.form.get("tanggal_input", "").strip()
+        nama_penerima = request.form.get("nama_penerima", "").strip()
+        barang = request.form.get("barang", "").strip()
+        jumlah = request.form.get("jumlah", "0").strip()
+        status = request.form.get("status", "Diproses").strip()
+
+        if no_pengiriman and nama_penerima and barang:
+            existing = Pengiriman.query.filter_by(no_pengiriman=no_pengiriman).first()
+            if not existing:
+                if tanggal_input:
+                    try:
+                        tanggal_display = datetime.strptime(tanggal_input, "%Y-%m-%d").strftime("%d-%m-%Y")
+                    except ValueError:
+                        tanggal_display = tanggal_input
+                else:
+                    tanggal_display = datetime.now().strftime("%d-%m-%Y")
+
+                pengiriman = Pengiriman(
+                    no_pengiriman=no_pengiriman,
+                    tanggal_input=tanggal_display,
+                    nama_penerima=nama_penerima,
+                    barang=barang,
+                    jumlah=int(jumlah or 0),
+                    status=status or "Diproses",
+                )
+                db.session.add(pengiriman)
+                db.session.commit()
+
+        return redirect(url_for("kasir_pengiriman"))
+
+    pengiriman_list = Pengiriman.query.order_by(Pengiriman.id.desc()).all()
+    return render_template("kasir/pengiriman.html", pengiriman_list=pengiriman_list)
+
+
+@app.route("/kasir/pengiriman/edit/<int:item_id>", methods=["GET", "POST"])
+def edit_pengiriman(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "kasir":
+        return "Akses Ditolak: Anda bukan Kasir", 403
+
+    pengiriman = Pengiriman.query.get_or_404(item_id)
+
+    if request.method == "POST":
+        pengiriman.no_pengiriman = request.form.get("no_pengiriman", pengiriman.no_pengiriman).strip()
+        tanggal_input = request.form.get("tanggal_input", "").strip()
+        if tanggal_input:
+            try:
+                pengiriman.tanggal_input = datetime.strptime(tanggal_input, "%Y-%m-%d").strftime("%d-%m-%Y")
+            except ValueError:
+                pengiriman.tanggal_input = tanggal_input
+        pengiriman.nama_penerima = request.form.get("nama_penerima", pengiriman.nama_penerima).strip()
+        pengiriman.barang = request.form.get("barang", pengiriman.barang).strip()
+        pengiriman.jumlah = int(request.form.get("jumlah", pengiriman.jumlah) or pengiriman.jumlah)
+        pengiriman.status = request.form.get("status", pengiriman.status).strip() or pengiriman.status
+        db.session.commit()
+        return redirect(url_for("kasir_pengiriman"))
+
+    return render_template("kasir/edit_pengiriman.html", pengiriman=pengiriman)
+
+
+@app.route("/kasir/pengiriman/hapus/<int:item_id>")
+def hapus_pengiriman(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "kasir":
+        return "Akses Ditolak: Anda bukan Kasir", 403
+
+    pengiriman = Pengiriman.query.get_or_404(item_id)
+    db.session.delete(pengiriman)
+    db.session.commit()
+    return redirect(url_for("kasir_pengiriman"))
+
+
+@app.route("/kasir/pengiriman/status/<int:item_id>", methods=["POST"])
+def update_status_pengiriman(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "kasir":
+        return "Akses Ditolak: Anda bukan Kasir", 403
+
+    pengiriman = Pengiriman.query.get_or_404(item_id)
+    pengiriman.status = request.form.get("status", pengiriman.status).strip() or pengiriman.status
+    db.session.commit()
+    return redirect(url_for("kasir_pengiriman"))
 
 
 @app.route("/gudang/dashboard")

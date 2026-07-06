@@ -67,10 +67,10 @@
         <div class="search-container">
             <label><strong>Cari :</strong></label>
             <input type="text" id="search-pengiriman" placeholder="Nama penerima / barang..." onkeyup="filterTabel()">
-            <label><strong>Dari :</strong></label>
-            <input type="date" id="filter-dari">
+            <label><strong>Filter Tanggal :</strong></label>
+            <input type="date" id="filter-dari" onchange="filterTabel()">
             <label><strong>Sampai :</strong></label>
-            <input type="date" id="filter-sampai">
+            <input type="date" id="filter-sampai" onchange="filterTabel()">
         </div>
 
         <table class="data-table">
@@ -86,33 +86,33 @@
                 </tr>
             </thead>
             <tbody id="tabel-pengiriman">
+                {% for item in pengiriman_list %}
                 <tr>
-                    <td>PG001</td>
-                    <td>01-06-2026</td>
-                    <td>Pak Budi</td>
-                    <td>Keripik</td>
-                    <td>10</td>
-                    <td><span class="badge badge-sampai">Sampai</span></td>
-                    <td><button class="btn-update" onclick="bukaUpdateStatus('PG001')">Update Status</button></td>
+                    <td>{{ item.no_pengiriman }}</td>
+                    <td>{{ item.tanggal_input }}</td>
+                    <td>{{ item.nama_penerima }}</td>
+                    <td>{{ item.barang }}</td>
+                    <td>{{ item.jumlah }}</td>
+                    <td>
+                        <form method="POST" action="/kasir/pengiriman/status/{{ item.id }}" style="display:flex; gap:6px; align-items:center;">
+                            <select name="status" style="padding:6px; border-radius:4px; border:1px solid #FFCC80;">
+                                <option value="Diproses" {% if item.status == 'Diproses' %}selected{% endif %}>Diproses</option>
+                                <option value="Dikirim" {% if item.status == 'Dikirim' %}selected{% endif %}>Dikirim</option>
+                                <option value="Sampai" {% if item.status == 'Sampai' %}selected{% endif %}>Sampai</option>
+                            </select>
+                            <button type="submit" style="background:#4CAF50; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Ubah</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="/kasir/pengiriman/edit/{{ item.id }}" style="background:#29B6F6; color:white; padding:6px 10px; border-radius:4px; text-decoration:none; margin-right:6px;">Edit</a>
+                        <a href="/kasir/pengiriman/hapus/{{ item.id }}" onclick="return confirm('Hapus data pengiriman ini?')" style="background:#E53935; color:white; padding:6px 10px; border-radius:4px; text-decoration:none;">Hapus</a>
+                    </td>
                 </tr>
+                {% else %}
                 <tr>
-                    <td>PG002</td>
-                    <td>02-06-2026</td>
-                    <td>Bu Sari</td>
-                    <td>Waffer</td>
-                    <td>5</td>
-                    <td><span class="badge badge-dikirim">Dikirim</span></td>
-                    <td><button class="btn-update" onclick="bukaUpdateStatus('PG002')">Update Status</button></td>
+                    <td colspan="7" style="text-align:center; color:#888;">Belum ada data pengiriman.</td>
                 </tr>
-                <tr>
-                    <td>PG003</td>
-                    <td>03-06-2026</td>
-                    <td>Pak Agus</td>
-                    <td>Kacang</td>
-                    <td>20</td>
-                    <td><span class="badge badge-proses">Diproses</span></td>
-                    <td><button class="btn-update" onclick="bukaUpdateStatus('PG003')">Update Status</button></td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -121,61 +121,40 @@
     <div id="modalPengiriman" class="modal">
         <div class="modal-content">
             <h3>🚚 Tambah Pengiriman</h3>
-            <div class="form-group">
-                <label>No Pengiriman :</label>
-                <input type="text" placeholder="Contoh: PG004">
-            </div>
-            <div class="form-group">
-                <label>Tanggal Input :</label>
-                <input type="date" id="tanggal-input">
-            </div>
-            <div class="form-group">
-                <label>Nama Penerima :</label>
-                <input type="text" placeholder="Nama pelanggan...">
-            </div>
-            <div class="form-group">
-                <label>Barang :</label>
-                <input type="text" placeholder="Nama barang yang dikirim...">
-            </div>
-            <div class="form-group">
-                <label>Jumlah :</label>
-                <input type="number" min="1" placeholder="1">
-            </div>
-            <div class="form-group">
-                <label>Status :</label>
-                <select>
-                    <option value="Diproses">Diproses</option>
-                    <option value="Dikirim">Dikirim</option>
-                    <option value="Sampai">Sampai</option>
-                </select>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-save" onclick="simpanPengiriman()">Simpan</button>
-                <button class="btn-cancel" onclick="tutupModal()">Batal</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL UPDATE STATUS -->
-    <div id="modalStatus" class="modal">
-        <div class="modal-content">
-            <h3>Update Status Pengiriman</h3>
-            <div class="form-group">
-                <label>No Pengiriman :</label>
-                <input type="text" id="update-id" readonly style="background-color: #F5F5F5;">
-            </div>
-            <div class="form-group">
-                <label>Status Baru :</label>
-                <select id="update-status">
-                    <option value="Diproses">Diproses</option>
-                    <option value="Dikirim">Dikirim</option>
-                    <option value="Sampai">Sampai</option>
-                </select>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-save" onclick="simpanStatus()">Simpan</button>
-                <button class="btn-cancel" onclick="tutupModalStatus()">Batal</button>
-            </div>
+            <form method="POST" action="/kasir/pengiriman">
+                <div class="form-group">
+                    <label>No Pengiriman :</label>
+                    <input type="text" name="no_pengiriman" placeholder="Contoh: PG004" required>
+                </div>
+                <div class="form-group">
+                    <label>Tanggal Input :</label>
+                    <input type="date" id="tanggal-input" name="tanggal_input">
+                </div>
+                <div class="form-group">
+                    <label>Nama Penerima :</label>
+                    <input type="text" name="nama_penerima" placeholder="Nama pelanggan..." required>
+                </div>
+                <div class="form-group">
+                    <label>Barang :</label>
+                    <input type="text" name="barang" placeholder="Nama barang yang dikirim..." required>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah :</label>
+                    <input type="number" name="jumlah" min="1" placeholder="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Status :</label>
+                    <select name="status">
+                        <option value="Diproses">Diproses</option>
+                        <option value="Dikirim">Dikirim</option>
+                        <option value="Sampai">Sampai</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-save" type="submit">Simpan</button>
+                    <button class="btn-cancel" type="button" onclick="tutupModal()">Batal</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -184,33 +163,52 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('tanggal-input').value = today;
         });
+
         function bukaModal() {
             document.getElementById('modalPengiriman').style.display = 'block';
         }
+
         function tutupModal() {
             document.getElementById('modalPengiriman').style.display = 'none';
         }
-        function bukaUpdateStatus(noPengiriman) {
-            document.getElementById('update-id').value = noPengiriman;
-            document.getElementById('modalStatus').style.display = 'block';
+
+        function parseDate(value) {
+            if (!value) return null;
+            const text = value.trim();
+            const parts = text.split('-');
+            if (parts.length !== 3) return null;
+
+            const first = Number(parts[0]);
+            const second = Number(parts[1]);
+            const third = Number(parts[2]);
+
+            if (text.includes('/') || text.length === 10 && parts[0].length === 4) {
+                return new Date(third, second - 1, first);
+            }
+
+            if (text.length === 10 && parts[2].length === 4) {
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+
+            return new Date(first, second - 1, third);
         }
-        function tutupModalStatus() {
-            document.getElementById('modalStatus').style.display = 'none';
-        }
-        function simpanPengiriman() {
-            alert('Data pengiriman berhasil disimpan!');
-            tutupModal();
-        }
-        function simpanStatus() {
-            const id = document.getElementById('update-id').value;
-            const status = document.getElementById('update-status').value;
-            alert(`Status ${id} diupdate ke: ${status}`);
-            tutupModalStatus();
-        }
+
         function filterTabel() {
-            const keyword = document.getElementById('search-pengiriman').value.toLowerCase();
+            const keyword = document.getElementById('search-pengiriman').value.toLowerCase().trim();
+            const dari = document.getElementById('filter-dari').value;
+            const sampai = document.getElementById('filter-sampai').value;
+
             document.querySelectorAll('#tabel-pengiriman tr').forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(keyword) ? '' : 'none';
+                const text = row.innerText.toLowerCase();
+                const rowDate = parseDate(row.cells[1].textContent.trim());
+                const fromDate = dari ? new Date(dari) : null;
+                const toDate = sampai ? new Date(sampai) : null;
+
+                const matchKeyword = !keyword || text.includes(keyword);
+                const matchFrom = !fromDate || !rowDate || rowDate >= fromDate;
+                const matchTo = !toDate || !rowDate || rowDate <= toDate;
+
+                row.style.display = (matchKeyword && matchFrom && matchTo) ? '' : 'none';
             });
         }
     </script>

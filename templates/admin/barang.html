@@ -64,10 +64,11 @@
             <button class="btn-add" onclick="bukaModal()">+ Tambah Stok Baru</button>
         </div>
 
-        <div class="search-container">
+        <form class="search-container" method="get" action="/admin/barang">
             <label><strong>Cari Snack:</strong></label>
-            <input type="text" placeholder="Masukkan nama barang...">
-        </div>
+            <input type="text" name="q" value="{{ search_query or '' }}" placeholder="Masukkan nama barang...">
+            <button class="btn-add" type="submit">Cari</button>
+        </form>
 
         <!-- TABEL DATA BARANG TERBARU SESUAI REKOMENDASI DOSEN -->
         <table class="data-table">
