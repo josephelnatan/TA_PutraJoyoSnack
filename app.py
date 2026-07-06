@@ -1,162 +1,469 @@
-from flask import Flask, render_template, request, redirect, session
-from config import Config
+import csv
+from datetime import datetime
+from io import BytesIO, StringIO
+from types import SimpleNamespace
+
+from docx import Document
+from flask import Flask, render_template, request, redirect, session, url_for, Response
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 from models.user import db, User
 
-# KONFIGURASI: Arahkan template ke folder 'Frontend' sesuai instruksi tugas
 app = Flask(__name__)
 
-# Konfigurasi Database & Session Secure Key
-app.config['SECRET_KEY'] = 'putrajoyosnack_secret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///putra_joyo_snack.db' # Menggunakan SQLite lokal agar langsung jalan tanpa ribet setting cloud
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SECRET_KEY"] = "putrajoyosnack_secret"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///putra_joyo_snack.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+db.init_app(app)
 
-# ========================================================
-# 1. MODEL DATABASE (Sesuai Rekomendasi Dosen)
-# ========================================================
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(50), nullable=False)
-    role = db.Column(db.String(20), nullable=False) # Admin, Kasir, Staf Gudang
 
 class Barang(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nama_barang = db.Column(db.String(100), nullable=False)
     harga = db.Column(db.Integer, nullable=False)
     stok = db.Column(db.Integer, nullable=False)
-    satuan = db.Column(db.String(20), nullable=False) # Pcs, Pack, Bal, Dus
-    tanggal_masuk = db.Column(db.String(20), nullable=False) # Tanggal masuk stok
-    tanggal_kadaluarsa = db.Column(db.String(20), nullable=False) # Tanggal Expired
-    id_admin_fk = db.Column(db.String(50), nullable=False) # Otomatis mencatat siapa yang input
+    satuan = db.Column(db.String(20), nullable=False)
+    tanggal_masuk = db.Column(db.String(20), nullable=False)
+    tanggal_kadaluarsa = db.Column(db.String(20), nullable=False)
+    id_admin_fk = db.Column(db.String(50), nullable=False)
 
-# ========================================================
-# 2. RUTE HALAMAN (ROUTES)
-# ========================================================
 
-# Rute Utama: Otomatis Lempar ke Login
-@app.route('/')
+def init_default_data():
+    with app.app_context():
+        db.create_all()
+        if not User.query.filter_by(username="admin").first():
+            db.session.add(User(username="admin", password="admin", role="admin"))
+            db.session.commit()
+
+
+init_default_data()
+
+
+@app.route("/")
 def index():
-    return redirect(url_for('login'))
+    return redirect(url_for("login"))
 
-# Rute Login Otomatis Deteksi Role dari Database (Tanpa Dropdown)
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
-        user = User.query.filter_by(
-            username=username,
-            password=password
-        ).first()
+        user = User.query.filter_by(username=username, password=password).first()
 
         if user:
             session["user_id"] = user.id
             session["username"] = user.username
             session["role"] = user.role
 
-            # Harmonisasi string role (samakan dengan huruf di database/enum)
-            if user.role.lower() == "admin":
+            role = user.role.lower()
+            if role == "admin":
                 return redirect("/admin/dashboard")
-            elif user.role.lower() == "kasir":
+            elif role == "kasir":
                 return redirect("/kasir/dashboard")
-            elif user.role.lower() == "staf gudang" or user.role.lower() == "gudang":
+            elif role in {"staf gudang", "gudang"}:
                 return redirect("/gudang/dashboard")
 
         return render_template("login.html", error="Username atau Password Salah")
 
-    # Diarahkan ke folder admin/login.html sesuai struktur direktori tugas
     return render_template("login.html")
 
 
-# Rute Dashboard Admin
-@app.route('/admin/dashboard')
+@app.route("/admin/dashboard")
 def admin_dashboard():
     if "user_id" not in session:
         return redirect("/login")
-        
-    if session.get("role").lower() != "admin":
+
+    if (session.get("role") or "").lower() != "admin":
         return "Akses Ditolak: Anda bukan Admin", 403
 
-    # Mengembalikan file HTML asli, bukan string teks polos lagi
     return render_template("admin/dashboard.html")
-# ==================== ROUTE SUB-MENU ADMIN ====================
-@app.route("/admin/barang")
+
+
+@app.route("/admin/barang", methods=["GET", "POST"])
 def admin_barang():
-    if request.method == 'POST':
-        # Ambil data dari form barang.html
-        nama = request.form['nama_barang']
-        harga = request.form['harga']
-        stok = request.form['stok']
-        satuan = request.form['satuan']
-        tgl_masuk = request.form['tanggal_masuk']
-        tgl_expired = request.form['tanggal_kadaluarsa']
-        
-        # Fitur Auto-Capture Admin: Mengambil nama admin yang sedang login dari session
-        penginput = session.get('username', 'Unknown Admin')
-        
-        # Simpan ke database
-        barang_baru = Barang(
-            nama_barang=nama, harga=harga, stok=stok, satuan=satuan,
-            tanggal_masuk=tgl_masuk, tanggal_kadaluarsa=tgl_expired, id_admin_fk=penginput
-        )
-        db.session.add(barang_baru)
+    if request.method == "POST":
+        nama = request.form.get("nama_barang", "").strip()
+        harga = request.form.get("harga", "0")
+        stok = request.form.get("stok", "0")
+        satuan = request.form.get("satuan", "Pcs")
+        tgl_masuk = request.form.get("tanggal_masuk")
+        tgl_expired = request.form.get("tanggal_kadaluarsa")
+
+        penginput = session.get("username", "Unknown Admin")
+
+        if nama:
+            barang_baru = Barang(
+                nama_barang=nama,
+                harga=int(harga or 0),
+                stok=int(stok or 0),
+                satuan=satuan,
+                tanggal_masuk=tgl_masuk or "-",
+                tanggal_kadaluarsa=tgl_expired or "-",
+                id_admin_fk=penginput,
+            )
+            db.session.add(barang_baru)
+            db.session.commit()
+        return redirect(url_for("admin_barang"))
+
+    barang_list = Barang.query.order_by(Barang.id.desc()).all()
+    return render_template("admin/barang.html", barang_list=barang_list)
+
+
+@app.route("/admin/barang/hapus/<int:item_id>")
+def hapus_barang(item_id):
+    barang = Barang.query.get_or_404(item_id)
+    db.session.delete(barang)
+    db.session.commit()
+    return redirect(url_for("admin_barang"))
+
+
+@app.route("/admin/barang/edit/<int:item_id>", methods=["GET", "POST"])
+def edit_barang(item_id):
+    barang = Barang.query.get_or_404(item_id)
+
+    if request.method == "POST":
+        barang.nama_barang = request.form.get("nama_barang", barang.nama_barang).strip()
+        barang.harga = int(request.form.get("harga", barang.harga) or barang.harga)
+        barang.stok = int(request.form.get("stok", barang.stok) or barang.stok)
+        barang.satuan = request.form.get("satuan", barang.satuan)
+        barang.tanggal_masuk = request.form.get("tanggal_masuk", barang.tanggal_masuk)
+        barang.tanggal_kadaluarsa = request.form.get("tanggal_kadaluarsa", barang.tanggal_kadaluarsa)
         db.session.commit()
-        return redirect(url_for('admin_barang'))
-        
-    return render_template('admin/barang.html')
+        return redirect(url_for("admin_barang"))
 
-# Rute User Management
-@app.route('/admin/user')
+    return render_template("admin/edit_barang.html", barang=barang)
+
+
+@app.route("/admin/user", methods=["GET", "POST"])
 def admin_user():
-    return render_template('admin/user.html')
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        role = request.form.get("role", "").strip()
 
-# Rute Laporan
-@app.route('/admin/laporan')
+        if username and password and role:
+            existing_user = User.query.filter_by(username=username).first()
+            if not existing_user:
+                new_user = User(username=username, password=password, role=role)
+                db.session.add(new_user)
+                db.session.commit()
+
+        return redirect(url_for("admin_user"))
+
+    users = User.query.order_by(User.id).all()
+    return render_template("admin/user.html", users=users)
+
+
+@app.route("/admin/laporan")
 def admin_laporan():
-    return render_template('admin/laporan.html')
+    total_barang = Barang.query.count()
+    total_stok = Barang.query.with_entities(db.func.sum(Barang.stok)).scalar() or 0
+    total_nilai = sum(item.harga * item.stok for item in Barang.query.all())
+    return render_template(
+        "admin/laporan.html",
+        total_barang=total_barang,
+        total_stok=total_stok,
+        total_nilai=total_nilai,
+        barang_list=Barang.query.order_by(Barang.id.desc()).all(),
+    )
 
-# Rute Kritik & Saran
-@app.route('/admin/kritik')
+
+@app.route("/admin/laporan/download")
+def admin_laporan_download():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    barang_list = Barang.query.order_by(Barang.id).all()
+    si = StringIO()
+    writer = csv.writer(si)
+    writer.writerow(["ID", "Nama Barang", "Harga", "Stok", "Satuan", "Tanggal Masuk", "Tanggal Kadaluarsa", "Diinput Oleh"])
+
+    for barang in barang_list:
+        writer.writerow([
+            barang.id,
+            barang.nama_barang,
+            barang.harga,
+            barang.stok,
+            barang.satuan,
+            barang.tanggal_masuk,
+            barang.tanggal_kadaluarsa,
+            barang.id_admin_fk,
+        ])
+
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=laporan_barang.csv"},
+    )
+
+
+@app.route("/admin/laporan/download/pdf")
+def admin_laporan_download_pdf():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    barang_list = Barang.query.order_by(Barang.id).all()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+    story.append(Paragraph("Laporan Stok Barang", styles["Title"]))
+    story.append(Spacer(1, 12))
+    story.append(Paragraph(f"Total barang: {len(barang_list)}", styles["BodyText"]))
+    story.append(Spacer(1, 12))
+
+    data = [["ID", "Nama Barang", "Harga", "Stok", "Satuan"]]
+    for barang in barang_list:
+        data.append([str(barang.id), barang.nama_barang, f"Rp {barang.harga:,}", str(barang.stok), barang.satuan])
+
+    table = Table(data, repeatRows=1)
+    table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#FFA726")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("PADDING", (0, 0), (-1, -1), 6),
+        ])
+    )
+    story.append(table)
+
+    doc.build(story)
+    buffer.seek(0)
+    return Response(buffer.getvalue(), mimetype="application/pdf", headers={"Content-Disposition": "attachment; filename=laporan_barang.pdf"})
+
+
+@app.route("/admin/laporan/download/docx")
+def admin_laporan_download_docx():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    barang_list = Barang.query.order_by(Barang.id).all()
+    document = Document()
+    document.add_heading("Laporan Stok Barang", level=1)
+    document.add_paragraph(f"Total barang: {len(barang_list)}")
+
+    table = document.add_table(rows=1, cols=5)
+    table.style = "Table Grid"
+    headers = table.rows[0].cells
+    headers[0].text = "ID"
+    headers[1].text = "Nama Barang"
+    headers[2].text = "Harga"
+    headers[3].text = "Stok"
+    headers[4].text = "Satuan"
+
+    for barang in barang_list:
+        row = table.add_row().cells
+        row[0].text = str(barang.id)
+        row[1].text = barang.nama_barang
+        row[2].text = f"Rp {barang.harga:,}"
+        row[3].text = str(barang.stok)
+        row[4].text = barang.satuan
+
+    buffer = BytesIO()
+    document.save(buffer)
+    buffer.seek(0)
+    return Response(buffer.getvalue(), mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document", headers={"Content-Disposition": "attachment; filename=laporan_barang.docx"})
+
+
+@app.route("/admin/kritik")
 def admin_kritik():
-    return render_template('admin/kritik.html')
+    return render_template("admin/kritik.html")
 
-# ==================== KASIR ====================
+
 @app.route("/kasir/dashboard")
 def kasir_dashboard():
     if "user_id" not in session:
         return redirect("/login")
-        
-    if session.get("role").lower() != "kasir":
+
+    if (session.get("role") or "").lower() != "kasir":
         return "Akses Ditolak: Anda bukan Kasir", 403
 
-    # Ganti dengan path template halaman transaksi utama milik kasir nanti
-    return render_template("utama/index.html", mode="kasir")
+    barang_count = Barang.query.count()
+    stok_total = Barang.query.with_entities(db.func.sum(Barang.stok)).scalar() or 0
+    return render_template(
+        "kasir/dashboard.html",
+        mode="kasir",
+        barang_count=barang_count,
+        stok_total=stok_total,
+    )
 
 
-# ==================== GUDANG ====================
+@app.route("/kasir/transaksi", methods=["GET", "POST"])
+def kasir_transaksi():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "kasir":
+        return "Akses Ditolak: Anda bukan Kasir", 403
+
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or {}
+        items = payload.get("items", [])
+        kasir_id = payload.get("kasir_id")
+
+        if not items:
+            return {"error": "Keranjang kosong"}, 400
+
+        total = 0
+        for item in items:
+            barang = Barang.query.get(item.get("barang_id"))
+            if not barang:
+                return {"error": "Barang tidak ditemukan"}, 400
+            qty = int(item.get("qty", 0))
+            if qty <= 0 or qty > barang.stok:
+                return {"error": f"Stok {barang.nama_barang} tidak mencukupi"}, 400
+            total += barang.harga * qty
+            barang.stok -= qty
+
+        db.session.commit()
+        return {"ok": True, "total": total}
+
+    barang_list = Barang.query.order_by(Barang.nama_barang).all()
+    return render_template("kasir/transaksi.html", barang_list=barang_list)
+
+
+@app.route("/kasir/retur")
+def kasir_retur():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "kasir":
+        return "Akses Ditolak: Anda bukan Kasir", 403
+
+    return render_template("kasir/retur.html")
+
+
+@app.route("/kasir/pengiriman")
+def kasir_pengiriman():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "kasir":
+        return "Akses Ditolak: Anda bukan Kasir", 403
+
+    return render_template("kasir/pengiriman.html")
+
+
 @app.route("/gudang/dashboard")
 def gudang_dashboard():
     if "user_id" not in session:
         return redirect("/login")
-        
-    if session.get("role").lower() not in ["gudang", "staf gudang"]:
+
+    if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
         return "Akses Ditolak: Anda bukan Staff Gudang", 403
 
-    # Ganti dengan path template halaman kelola stok milik gudang nanti
-    return render_template("utama/index.html", mode="gudang")
+    total_stok = Barang.query.with_entities(db.func.sum(Barang.stok)).scalar() or 0
+    total_masuk = 0
+    total_keluar = 0
+
+    return render_template(
+        "gudang/dashboard.html",
+        mode="gudang",
+        sekarang=datetime.now(),
+        total_masuk=total_masuk,
+        total_keluar=total_keluar,
+        total_stok=total_stok,
+    )
 
 
-# ==================== LOGOUT ====================
+@app.route("/gudang/barang-masuk", methods=["GET", "POST"])
+def barang_masuk():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
+        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+
+    barang_list = Barang.query.order_by(Barang.id).all()
+    histori = [
+        SimpleNamespace(
+            id=1,
+            barang=SimpleNamespace(nama_barang="Keripik Balado"),
+            supplier="PT Sumber Jaya",
+            jumlah=50,
+            tanggal_masuk="2026-07-01",
+            tanggal_expired="2026-12-31",
+        )
+    ]
+
+    if request.method == "POST":
+        return redirect(url_for("barang_masuk"))
+
+    return render_template("gudang/barang_masuk.html", barang=barang_list, histori=histori)
+
+
+@app.route("/gudang/barang-masuk/edit/<int:item_id>", methods=["GET", "POST"])
+def edit_barang_masuk(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
+        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+
+    barang_list = Barang.query.order_by(Barang.id).all()
+    data = SimpleNamespace(
+        id=item_id,
+        barang_id=1,
+        supplier="PT Sumber Jaya",
+        jumlah=50,
+        tanggal_masuk="2026-07-01",
+        tanggal_expired="2026-12-31",
+    )
+
+    if request.method == "POST":
+        return redirect(url_for("barang_masuk"))
+
+    return render_template("gudang/edit_barang_masuk.html", barang_list=barang_list, data=data)
+
+
+@app.route("/gudang/barang-masuk/hapus/<int:item_id>")
+def hapus_barang_masuk(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
+        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+
+    return redirect(url_for("barang_masuk"))
+
+
+@app.route("/gudang/laporan-stok")
+def laporan_stok():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
+        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+
+    keyword = request.args.get("keyword", "").strip()
+    query = Barang.query
+    if keyword:
+        query = query.filter(Barang.nama_barang.ilike(f"%{keyword}%"))
+
+    barang_list = query.order_by(Barang.id).all()
+    return render_template("gudang/laporan_stok.html", barang=barang_list, keyword=keyword)
+
+
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(url_for("login"))
 
 
-# RUN APP
 if __name__ == "__main__":
     app.run(debug=True)

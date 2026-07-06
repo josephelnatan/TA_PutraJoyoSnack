@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Barang</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #FDFBF7; color: #333; }
+        .container { max-width: 560px; margin: 40px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        h2 { color: #E65100; margin-top: 0; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #FFCC80; border-radius: 8px; box-sizing: border-box; background: #FFFDE7; }
+        .actions { display: flex; gap: 10px; margin-top: 20px; }
+        button, .btn-back { display: inline-block; padding: 10px 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; color: white; }
+        button { background: #FFA726; }
+        .btn-back { background: #9E9E9E; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Edit Data Barang</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label>Nama Barang</label>
+                <input type="text" name="nama_barang" value="{{ barang.nama_barang }}" required>
+            </div>
+            <div class="form-group">
+                <label>Harga</label>
+                <input type="number" name="harga" value="{{ barang.harga }}" required>
+            </div>
+            <div class="form-group">
+                <label>Stok</label>
+                <input type="number" name="stok" value="{{ barang.stok }}" required>
+            </div>
+            <div class="form-group">
+                <label>Satuan</label>
+                <select name="satuan">
+                    <option value="Pcs" {% if barang.satuan == 'Pcs' %}selected{% endif %}>Pcs</option>
+                    <option value="Pack" {% if barang.satuan == 'Pack' %}selected{% endif %}>Pack</option>
+                    <option value="Bal" {% if barang.satuan == 'Bal' %}selected{% endif %}>Bal</option>
+                    <option value="Dus" {% if barang.satuan == 'Dus' %}selected{% endif %}>Dus</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tanggal Masuk</label>
+                <input type="date" name="tanggal_masuk" value="{{ barang.tanggal_masuk }}">
+            </div>
+            <div class="form-group">
+                <label>Tanggal Kadaluarsa</label>
+                <input type="date" name="tanggal_kadaluarsa" value="{{ barang.tanggal_kadaluarsa }}">
+            </div>
+            <div class="actions">
+                <button type="submit">Simpan Perubahan</button>
+                <a class="btn-back" href="/admin/barang">Kembali</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

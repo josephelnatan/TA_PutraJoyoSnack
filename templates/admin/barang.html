@@ -77,36 +77,33 @@
                     <th>Nama Barang</th>
                     <th>Harga</th>
                     <th>Stok Saat Ini</th>
-                    <th>Satuan</th> <!-- Saran Dosen: Tambah Satuan -->
-                    <th>Tgl Masuk</th> <!-- Saran Dosen: Tanggal Masuk Stok -->
-                    <th>Kadaluarsa</th> <!-- Saran Dosen: Kadaluarsa -->
-                    <th>Diinput Oleh</th> <!-- Saran Dosen: id admin fk -->
+                    <th>Satuan</th>
+                    <th>Tgl Masuk</th>
+                    <th>Kadaluarsa</th>
+                    <th>Diinput Oleh</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
+                {% for barang in barang_list %}
                 <tr>
-                    <td>BR01</td>
-                    <td>Keripik Singkong Pedas</td>
-                    <td>15.000</td>
-                    <td>8 <span class="badge badge-warning">Menipis</span></td>
-                    <td>Pcs</td>
-                    <td>25-06-2026</td>
-                    <td>25-12-2026</td>
-                    <td>ADM01 (Anda)</td>
-                    <td><button style="background-color:#EF5350; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Hapus</button></td>
+                    <td>{{ barang.id }}</td>
+                    <td>{{ barang.nama_barang }}</td>
+                    <td>Rp {{ "{:,.0f}".format(barang.harga) }}</td>
+                    <td>{{ barang.stok }}</td>
+                    <td>{{ barang.satuan }}</td>
+                    <td>{{ barang.tanggal_masuk }}</td>
+                    <td>{{ barang.tanggal_kadaluarsa }}</td>
+                    <td>{{ barang.id_admin_fk }}</td>
+                    <td>
+                        <a href="/admin/barang/hapus/{{ barang.id }}" style="background-color:#EF5350; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; text-decoration:none;" onclick="return confirm('Hapus barang ini?')">Hapus</a>
+                    </td>
                 </tr>
+                {% else %}
                 <tr>
-                    <td>BR02</td>
-                    <td>Lanting Bumbu Bawang</td>
-                    <td>22.000</td>
-                    <td>50 <span class="badge badge-safe">Aman</span></td>
-                    <td>Pack</td>
-                    <td>28-06-2026</td>
-                    <td>15-08-2026 <span class="badge badge-danger">Hampir Expired</span></td>
-                    <td>ADM01 (Anda)</td>
-                    <td><button style="background-color:#EF5350; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Hapus</button></td>
+                    <td colspan="9" style="text-align:center; color:#777;">Belum ada data barang.</td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
