@@ -24,6 +24,7 @@ class User(UserMixin, db.Model):
         db.String(20),
         nullable=False
     )
+    
 
     created_by = db.Column(
         db.Integer,
