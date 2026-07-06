@@ -222,19 +222,30 @@ def gudang_dashboard():
         func.sum(Barang.stok)
     ).scalar() or 0
 
+    # Barang stok menipis (stok 1-20)
+    stok_tipis = Barang.query.filter(
+        Barang.stok > 0,
+        Barang.stok <= 20
+    ).count()
+
+    # Barang habis (stok = 0)
+    barang_habis = Barang.query.filter(
+        Barang.stok == 0
+    ).count()
+
     # Barang keluar bulan ini
     detail = DetailTransaksi.query.all()
-
     total_keluar = sum(x.qty for x in detail)
 
     return render_template(
-    "gudang/dashboard.html",
-    total_masuk=total_masuk,
-    total_keluar=total_keluar,
-    total_stok=total_stok,
-    sekarang=datetime.now()
-)
-
+        "gudang/dashboard.html",
+        total_masuk=total_masuk,
+        total_keluar=total_keluar,
+        total_stok=total_stok,
+        stok_tipis=stok_tipis,
+        barang_habis=barang_habis,
+        sekarang=datetime.now()
+    )
 @app.route("/gudang/barang-masuk", methods=["GET", "POST"])
 def gudang_barang_masuk():
 
