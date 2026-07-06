@@ -226,18 +226,9 @@ def gudang_barang_masuk():
 
     if request.method == "POST":
 
-        barang_id = request.form["barang_id"]
+        barang_id = int(request.form["barang_id"])
         supplier = request.form["supplier"]
         jumlah = int(request.form["jumlah"])
-            # Validasi jumlah
-    if jumlah <= 0:
-        flash("Jumlah barang harus lebih dari 0.", "error")
-        return redirect("/gudang/barang-masuk")
-
-# Validasi supplier
-    if supplier.strip() == "":
-        flash("Supplier tidak boleh kosong.", "error")
-        return redirect("/gudang/barang-masuk")
 
         tanggal_masuk = datetime.strptime(
             request.form["tanggal_masuk"],
@@ -248,6 +239,101 @@ def gudang_barang_masuk():
             request.form["tanggal_expired"],
             "%Y-%m-%d"
         ).date()
+
+        # ================= VALIDASI =================
+
+        if jumlah <= 0:
+            flash("Jumlah barang harus lebih dari 0.", "error")
+            return redirect("/gudang/barang-masuk")
+
+        if supplier.strip() == "":
+            flash("Supplier tidak boleh kosong.", "error")
+            return redirect("/gudang/barang-masuk")
+
+        if tanggal_expired < tanggal_masuk:
+            flash("Tanggal kadaluarsa tidak boleh sebelum tanggal masuk.", "error")
+            return redirect("/gudang/barang-masuk")
+
+        # ================= SIMPAN =================
+
+        data = BarangMasuk(
+            barang_id=barang_id,
+            supplier=supplier,
+            jumlah=jumlah,
+            tanggal_masuk=tanggal_masuk,
+            tanggal_expired=tanggal_expired,
+            gudang_id=session["user_id"]
+        )
+
+        db.session.add(data)
+
+        barang = Barang.query.get(barang_id)
+        barang.stok += jumlah
+
+        db.session.commit()
+
+        flash("Barang masuk berhasil ditambahkan!", "success")
+
+        return redirect("/gudang/barang-masuk")
+
+    barang = Barang.query.all()
+
+    histori = BarangMasuk.query.order_by(
+        BarangMasuk.id.desc()
+    ).all()
+
+    return render_template(
+        "gudang/barang_masuk.html",
+        barang=barang,
+        histori=histori
+    )
+        # ================= VALIDASI =================
+
+    if jumlah <= 0:
+            flash("Jumlah barang harus lebih dari 0.", "error")
+            return redirect("/gudang/barang-masuk")
+
+    if supplier.strip() == "":
+            flash("Supplier tidak boleh kosong.", "error")
+            return redirect("/gudang/barang-masuk")
+
+    if tanggal_expired < tanggal_masuk:
+            flash("Tanggal kadaluarsa tidak boleh sebelum tanggal masuk.", "error")
+            return redirect("/gudang/barang-masuk")
+
+        # ================= SIMPAN =================
+
+    data = BarangMasuk(
+            barang_id=barang_id,
+            supplier=supplier,
+            jumlah=jumlah,
+            tanggal_masuk=tanggal_masuk,
+            tanggal_expired=tanggal_expired,
+            gudang_id=session["user_id"]
+        )
+
+    db.session.add(data)
+
+    barang = Barang.query.get(barang_id)
+    barang.stok += jumlah
+
+    db.session.commit()
+
+    flash("Barang masuk berhasil ditambahkan!", "success")
+
+    return redirect("/gudang/barang-masuk")
+
+    barang = Barang.query.all()
+
+    histori = BarangMasuk.query.order_by(
+        BarangMasuk.id.desc()
+    ).all()
+
+    return render_template(
+        "gudang/barang_masuk.html",
+        barang=barang,
+        histori=histori
+    )
     # Validasi tanggal
     if tanggal_expired < tanggal_masuk:
         flash("Tanggal kadaluarsa tidak boleh sebelum tanggal masuk.", "error")
