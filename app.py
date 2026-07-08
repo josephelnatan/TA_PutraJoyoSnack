@@ -1,4 +1,6 @@
-import csv
+from flask import Flask, render_template, request, redirect, session, flash
+from config import Config
+from models.user import db, User
 from datetime import datetime
 from io import BytesIO, StringIO
 from types import SimpleNamespace
@@ -60,6 +62,7 @@ def login():
             session["user_id"] = user.id
             session["username"] = user.username
             session["role"] = user.role
+             
 
             role = user.role.lower()
             if role == "admin":
@@ -372,8 +375,8 @@ def kasir_retur():
     if (session.get("role") or "").lower() != "kasir":
         return "Akses Ditolak: Anda bukan Kasir", 403
 
-    return render_template("kasir/retur.html")
-
+    retur_list = Retur.query.order_by(Retur.tanggal.desc()).all()
+    return render_template("kasir/retur.html", retur_list=retur_list)
 
 @app.route("/kasir/pengiriman", methods=["GET", "POST"])
 def kasir_pengiriman():
@@ -480,22 +483,31 @@ def gudang_dashboard():
     if "user_id" not in session:
         return redirect("/login")
 
-    if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
-        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+    # Barang masuk bulan ini
+    barang_masuk = BarangMasuk.query.filter(
+        func.month(BarangMasuk.tanggal_masuk) == datetime.now().month,
+        func.year(BarangMasuk.tanggal_masuk) == datetime.now().year
+    ).all()
 
-    total_stok = Barang.query.with_entities(db.func.sum(Barang.stok)).scalar() or 0
-    total_masuk = 0
-    total_keluar = 0
+    total_masuk = sum(x.jumlah for x in barang_masuk)
+
+    # Total stok tersedia
+    total_stok = db.session.query(
+        func.sum(Barang.stok)
+    ).scalar() or 0
+
+    # Barang keluar bulan ini
+    detail = DetailTransaksi.query.all()
+
+    total_keluar = sum(x.qty for x in detail)
 
     return render_template(
-        "gudang/dashboard.html",
-        mode="gudang",
-        sekarang=datetime.now(),
-        total_masuk=total_masuk,
-        total_keluar=total_keluar,
-        total_stok=total_stok,
-    )
-
+    "gudang/dashboard.html",
+    total_masuk=total_masuk,
+    total_keluar=total_keluar,
+    total_stok=total_stok,
+    sekarang=datetime.now()
+)
 
 @app.route("/gudang/barang-masuk", methods=["GET", "POST"])
 def barang_masuk():
@@ -518,10 +530,64 @@ def barang_masuk():
     ]
 
     if request.method == "POST":
-        return redirect(url_for("barang_masuk"))
 
-    return render_template("gudang/barang_masuk.html", barang=barang_list, histori=histori)
+        barang_id = request.form["barang_id"]
+        supplier = request.form["supplier"]
+        jumlah = int(request.form["jumlah"])
+            # Validasi jumlah
+    if jumlah <= 0:
+        flash("Jumlah barang harus lebih dari 0.", "error")
+        return redirect("/gudang/barang-masuk")
 
+# Validasi supplier
+    if supplier.strip() == "":
+        flash("Supplier tidak boleh kosong.", "error")
+        return redirect("/gudang/barang-masuk")
+
+        tanggal_masuk = datetime.strptime(
+            request.form["tanggal_masuk"],
+            "%Y-%m-%d"
+        ).date()
+
+        tanggal_expired = datetime.strptime(
+            request.form["tanggal_expired"],
+            "%Y-%m-%d"
+        ).date()
+    # Validasi tanggal
+    if tanggal_expired < tanggal_masuk:
+        flash("Tanggal kadaluarsa tidak boleh sebelum tanggal masuk.", "error")
+        return redirect("/gudang/barang-masuk")
+        
+
+        data = BarangMasuk(
+            barang_id=barang_id,
+            supplier=supplier,
+            jumlah=jumlah,
+            tanggal_masuk=tanggal_masuk,
+            tanggal_expired=tanggal_expired,
+            gudang_id=session["user_id"]
+        )
+
+        db.session.add(data)
+
+        barang = Barang.query.get(barang_id)
+        barang.stok += jumlah
+
+        db.session.commit()
+        flash("Barang masuk berhasil ditambahkan!", "success")
+        return redirect("/gudang/barang-masuk")
+
+    barang = Barang.query.all()
+
+    histori = BarangMasuk.query.order_by(
+        BarangMasuk.id.desc()
+    ).all()
+
+    return render_template(
+        "gudang/barang_masuk.html",
+        barang=barang,
+        histori=histori
+    )
 
 @app.route("/gudang/barang-masuk/edit/<int:item_id>", methods=["GET", "POST"])
 def edit_barang_masuk(item_id):

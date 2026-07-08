@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PUTRA JOYO SNACK — Login</title>
     <style>
-        /* Gaya Tampilan Belakang (Background Gradasi Oranye) */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #FFB74D 0%, #FFA726 50%, #FB8C00 100%);
@@ -16,7 +15,6 @@
             align-items: center;
         }
 
-        /* Kotak Login Modern */
         .login-card {
             background: #ffffff;
             padding: 40px 30px;
@@ -41,7 +39,6 @@
             font-size: 14px;
         }
 
-        /* Group Input Form */
         .form-group {
             text-align: left;
             margin-bottom: 20px;
@@ -75,7 +72,6 @@
             box-shadow: 0 0 8px rgba(251, 140, 0, 0.2);
         }
 
-        /* Tombol Login Keren */
         .btn-submit {
             background: linear-gradient(90deg, #FFA726, #FB8C00);
             color: white;
@@ -97,7 +93,6 @@
             transform: translateY(-1px);
         }
 
-        /* Notifikasi Alert Merah Jika Salah Password */
         .error-alert {
             background-color: #FFEBEE;
             color: #D32F2F;
@@ -112,11 +107,10 @@
     </style>
 </head>
 <body>
-
     <div class="login-card">
         <h2>PUTRA JOYO SNACK</h2>
         <p>Sistem Informasi Toko Snack</p>
-        
+
         <!-- Peringatan Otomatis dari Flask jika password salah -->
         {% if error %}
         <div class="error-alert">
@@ -141,6 +135,6 @@
             <button type="submit" class="btn-submit">Masuk Ke Sistem</button>
         </form>
     </div>
-
 </body>
 </html>
+
