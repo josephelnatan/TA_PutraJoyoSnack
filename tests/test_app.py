@@ -179,6 +179,26 @@ class AppFlowTests(unittest.TestCase):
         with self.app.app_context():
             self.assertIsNone(Pengiriman.query.get(item_id))
 
+    def test_gudang_dashboard_is_accessible_for_staff(self):
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 2
+            sess["username"] = "gudang"
+            sess["role"] = "staf gudang"
+
+        response = self.client.get("/gudang/dashboard")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Dashboard Staff Gudang", response.data)
+
+    def test_kasir_retur_page_is_accessible(self):
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 3
+            sess["username"] = "kasir"
+            sess["role"] = "kasir"
+
+        response = self.client.get("/kasir/retur")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Retur Barang", response.data)
+
 
 if __name__ == "__main__":
     unittest.main()

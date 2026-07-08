@@ -7,6 +7,10 @@ class Barang(db.Model):
     nama_barang = db.Column(db.String(100), nullable=False)
     harga = db.Column(db.Integer, nullable=False)
     stok = db.Column(db.Integer, nullable=False)
+    satuan = db.Column(db.String(20), nullable=False)
+    tanggal_masuk = db.Column(db.String(20), nullable=False)
+    tanggal_kadaluarsa = db.Column(db.String(20), nullable=False)
+    id_admin_fk = db.Column(db.String(50), nullable=False)
 
 class BarangMasuk(db.Model):
     __tablename__ = "barang_masuk"
@@ -67,15 +71,3 @@ class Retur(db.Model):
     status = db.Column(db.String(20), default='Pending')
     kasir_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # ← users
     kasir = db.relationship('User', backref='retur')
-
-class Pengiriman(db.Model):
-    __tablename__ = 'pengiriman'
-    id = db.Column(db.Integer, primary_key=True)
-    no_pengiriman = db.Column(db.String(10), unique=True)
-    tanggal = db.Column(db.String(20))
-    nama_penerima = db.Column(db.String(100))
-    nama_barang = db.Column(db.String(100))
-    jumlah = db.Column(db.Integer)
-    status = db.Column(db.String(20), default='Diproses')
-    kasir_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # ← users
-    kasir = db.relationship('User', backref='pengiriman')

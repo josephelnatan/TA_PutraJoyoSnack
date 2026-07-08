@@ -1,18 +1,19 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for, Response
 from config import Config
-from models.user import db, User
 from datetime import datetime
 from io import BytesIO, StringIO
 from types import SimpleNamespace
 
 from docx import Document
-from flask import Flask, render_template, request, redirect, session, url_for, Response
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+from sqlalchemy import func
+from sqlalchemy import extract
 from models.user import db, User
 from models.pengiriman import Pengiriman
+from models.transaksi import Barang, BarangMasuk, DetailTransaksi, Retur
 
 app = Flask(__name__)
 
@@ -21,17 +22,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///putra_joyo_snack.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
-
-
-class Barang(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nama_barang = db.Column(db.String(100), nullable=False)
-    harga = db.Column(db.Integer, nullable=False)
-    stok = db.Column(db.Integer, nullable=False)
-    satuan = db.Column(db.String(20), nullable=False)
-    tanggal_masuk = db.Column(db.String(20), nullable=False)
-    tanggal_kadaluarsa = db.Column(db.String(20), nullable=False)
-    id_admin_fk = db.Column(db.String(50), nullable=False)
 
 
 def init_default_data():
@@ -378,6 +368,39 @@ def kasir_retur():
     retur_list = Retur.query.order_by(Retur.tanggal.desc()).all()
     return render_template("kasir/retur.html", retur_list=retur_list)
 
+@app.route("/kasir/retur/update-status", methods=["POST"])
+def update_status_retur():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "kasir":
+        return {"error": "Akses Ditolak"}, 403
+
+    payload = request.get_json(silent=True) or {}
+    id_retur = str(payload.get("id_retur", "")).strip()
+    status = str(payload.get("status", "Pending")).strip() or "Pending"
+
+    if not id_retur:
+        return {"error": "ID retur kosong"}, 400
+
+    retur = Retur.query.filter_by(id_retur=id_retur).first()
+    if not retur:
+        retur = Retur(
+            id_retur=id_retur,
+            tanggal=datetime.now().strftime("%d-%m-%Y"),
+            nama_barang="",
+            jumlah=0,
+            alasan="",
+            status=status,
+            kasir_id=session["user_id"],
+        )
+        db.session.add(retur)
+    else:
+        retur.status = status
+
+    db.session.commit()
+    return {"success": True}
+
 @app.route("/kasir/pengiriman", methods=["GET", "POST"])
 def kasir_pengiriman():
     if "user_id" not in session:
@@ -484,10 +507,20 @@ def gudang_dashboard():
         return redirect("/login")
 
     # Barang masuk bulan ini
+    # SQLite tidak mendukung fungsi month()/year() secara default.
+    # Gunakan range tanggal untuk ambil data bulan berjalan.
+    now = datetime.now()
+    start_date = datetime(now.year, now.month, 1)
+    if now.month == 12:
+        end_date = datetime(now.year + 1, 1, 1)
+    else:
+        end_date = datetime(now.year, now.month + 1, 1)
+
     barang_masuk = BarangMasuk.query.filter(
-        func.month(BarangMasuk.tanggal_masuk) == datetime.now().month,
-        func.year(BarangMasuk.tanggal_masuk) == datetime.now().year
+        BarangMasuk.tanggal_masuk >= start_date.date(),
+        BarangMasuk.tanggal_masuk < end_date.date(),
     ).all()
+
 
     total_masuk = sum(x.jumlah for x in barang_masuk)
 
@@ -530,19 +563,19 @@ def barang_masuk():
     ]
 
     if request.method == "POST":
-
         barang_id = request.form["barang_id"]
         supplier = request.form["supplier"]
         jumlah = int(request.form["jumlah"])
-            # Validasi jumlah
-    if jumlah <= 0:
-        flash("Jumlah barang harus lebih dari 0.", "error")
-        return redirect("/gudang/barang-masuk")
 
-# Validasi supplier
-    if supplier.strip() == "":
-        flash("Supplier tidak boleh kosong.", "error")
-        return redirect("/gudang/barang-masuk")
+        # Validasi jumlah
+        if jumlah <= 0:
+            flash("Jumlah barang harus lebih dari 0.", "error")
+            return redirect("/gudang/barang-masuk")
+
+        # Validasi supplier
+        if not supplier.strip():
+            flash("Supplier tidak boleh kosong.", "error")
+            return redirect("/gudang/barang-masuk")
 
         tanggal_masuk = datetime.strptime(
             request.form["tanggal_masuk"],
@@ -553,11 +586,11 @@ def barang_masuk():
             request.form["tanggal_expired"],
             "%Y-%m-%d"
         ).date()
-    # Validasi tanggal
-    if tanggal_expired < tanggal_masuk:
-        flash("Tanggal kadaluarsa tidak boleh sebelum tanggal masuk.", "error")
-        return redirect("/gudang/barang-masuk")
-        
+
+        # Validasi tanggal
+        if tanggal_expired < tanggal_masuk:
+            flash("Tanggal kadaluarsa tidak boleh sebelum tanggal masuk.", "error")
+            return redirect("/gudang/barang-masuk")
 
         data = BarangMasuk(
             barang_id=barang_id,
@@ -565,17 +598,19 @@ def barang_masuk():
             jumlah=jumlah,
             tanggal_masuk=tanggal_masuk,
             tanggal_expired=tanggal_expired,
-            gudang_id=session["user_id"]
+            gudang_id=session["user_id"],
         )
 
         db.session.add(data)
 
         barang = Barang.query.get(barang_id)
-        barang.stok += jumlah
+        if barang:
+            barang.stok += jumlah
 
         db.session.commit()
         flash("Barang masuk berhasil ditambahkan!", "success")
         return redirect("/gudang/barang-masuk")
+
 
     barang = Barang.query.all()
 
