@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, flash, url_for, Response
 from config import Config
 from datetime import datetime
+from datetime import date
 from io import BytesIO, StringIO
 from types import SimpleNamespace
 
@@ -13,7 +14,7 @@ from sqlalchemy import func
 from sqlalchemy import extract
 from models.user import db, User
 from models.pengiriman import Pengiriman
-from models.transaksi import Barang, BarangMasuk, DetailTransaksi, Retur
+from models.transaksi import Barang, BarangMasuk, Transaksi, DetailTransaksi, Retur
 
 app = Flask(__name__)
 
@@ -309,17 +310,22 @@ def admin_kritik():
 def kasir_dashboard():
     if "user_id" not in session:
         return redirect("/login")
-
-    if (session.get("role") or "").lower() != "kasir":
+    if session.get("role").lower() != "kasir":
         return "Akses Ditolak: Anda bukan Kasir", 403
 
-    barang_count = Barang.query.count()
-    stok_total = Barang.query.with_entities(db.func.sum(Barang.stok)).scalar() or 0
-    return render_template(
-        "kasir/dashboard.html",
-        mode="kasir",
-        barang_count=barang_count,
-        stok_total=stok_total,
+    hari_ini = date.today()
+    transaksi_list = Transaksi.query.filter(
+        db.func.date(Transaksi.tanggal) == hari_ini
+    ).order_by(Transaksi.tanggal.desc()).all()
+
+    total_penjualan = sum(t.total for t in transaksi_list)
+    jumlah_barang = Barang.query.filter(Barang.stok > 0).count()
+
+    return render_template("kasir/dashboard.html",
+        transaksi_hari_ini=len(transaksi_list),
+        total_penjualan=total_penjualan,
+        jumlah_barang=jumlah_barang,
+        transaksi_list=transaksi_list
     )
 
 

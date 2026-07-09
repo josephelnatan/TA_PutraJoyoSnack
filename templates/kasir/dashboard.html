@@ -12,11 +12,29 @@
         .sidebar .logout-btn { background-color: #E65100; margin-top: 30px; text-align: center; }
         .content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); box-sizing: border-box; }
         .header-main { display: flex; justify-content: space-between; align-items: center; }
+
+        /* Kartu Ringkasan */
         .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
-        .card { padding: 20px; border-radius: 14px; color: white; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+        .card { padding: 20px; border-radius: 10px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card h4 { margin: 0 0 8px 0; font-size: 14px; opacity: 0.9; }
+        .card p { font-size: 24px; font-weight: bold; margin: 5px 0 0 0; }
         .card-orange { background: linear-gradient(135deg, #FFB74D, #FFA726); }
         .card-blue { background: linear-gradient(135deg, #4FC3F7, #29B6F6); }
         .card-green { background: linear-gradient(135deg, #81C784, #66BB6A); }
+
+        /* Shortcut Menu */
+        .shortcut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 25px; }
+        .shortcut-card { background: white; border: 2px solid #FFE0B2; border-radius: 12px; padding: 25px 20px; text-align: center; text-decoration: none; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease; }
+        .shortcut-card:hover { background-color: #FFF8E1; border-color: #FFA726; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,167,38,0.2); }
+        .shortcut-card .icon { font-size: 36px; margin-bottom: 10px; }
+        .shortcut-card .label { font-weight: bold; font-size: 16px; color: #E65100; }
+        .shortcut-card .desc { font-size: 12px; color: #999; margin-top: 4px; }
+
+        /* Tabel Transaksi */
+        .data-table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
+        .data-table th, .data-table td { border: 1px solid #FFE0B2; padding: 12px; text-align: left; font-size: 14px; }
+        .data-table th { background-color: #FFA726; color: white; }
+        .data-table tr:nth-child(even) { background-color: #FFFDE7; }
     </style>
 </head>
 <body>
@@ -34,24 +52,72 @@
     <div class="content">
         <div class="header-main">
             <h1>Dashboard Kasir</h1>
-            <div>Login sebagai: <strong>Kasir</strong></div>
+            <div>Login sebagai: <strong>{{ session['username'] }}</strong></div>
         </div>
-
         <hr style="border: 0; height: 1px; background: #FFE0B2; margin: 20px 0;">
 
+        <!-- Kartu Ringkasan -->
         <div class="cards-grid">
             <div class="card card-orange">
-                <h4>Jumlah Barang</h4>
-                <p style="font-size: 24px; font-weight: bold; margin: 5px 0 0 0;">{{ barang_count }} Item</p>
+                <h4>Transaksi Hari Ini</h4>
+                <p>{{ transaksi_hari_ini }} Transaksi</p>
             </div>
             <div class="card card-blue">
-                <h4>Total Stok Tersedia</h4>
-                <p style="font-size: 24px; font-weight: bold; margin: 5px 0 0 0;">{{ stok_total }} Unit</p>
+                <h4>Total Penjualan Hari Ini</h4>
+                <p>Rp{{ "{:,.0f}".format(total_penjualan) }}</p>
             </div>
             <div class="card card-green">
-                <h4>Status Sistem</h4>
-                <p style="font-size: 24px; font-weight: bold; margin: 5px 0 0 0;">Siap</p>
+                <h4>Barang Tersedia</h4>
+                <p>{{ jumlah_barang }} Item</p>
             </div>
+        </div>
+
+        <!-- Shortcut Menu -->
+        <div class="shortcut-grid">
+            <a href="/kasir/transaksi" class="shortcut-card">
+                <div class="icon">🛒</div>
+                <div class="label">Transaksi</div>
+                <div class="desc">Input penjualan baru</div>
+            </a>
+            <a href="/kasir/retur" class="shortcut-card">
+                <div class="icon">↩️</div>
+                <div class="label">Retur</div>
+                <div class="desc">Kelola retur barang</div>
+            </a>
+            <a href="/kasir/pengiriman" class="shortcut-card">
+                <div class="icon">🚚</div>
+                <div class="label">Pengiriman</div>
+                <div class="desc">Log pengiriman barang</div>
+            </a>
+        </div>
+
+        <!-- Tabel Transaksi Hari Ini -->
+        <div style="margin-top: 35px;">
+            <h3>📋 Transaksi Hari Ini</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>No Transaksi</th>
+                        <th>Waktu</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if transaksi_list %}
+                        {% for t in transaksi_list %}
+                        <tr>
+                            <td>TR{{ '%03d'|format(t.id) }}</td>
+                            <td>{{ t.tanggal.strftime('%H:%M') }}</td>
+                            <td>Rp{{ "{:,.0f}".format(t.total) }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" style="text-align:center; color:#999;">Belum ada transaksi hari ini</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
     </div>
 
