@@ -94,32 +94,33 @@
         <!-- Tabel Transaksi Hari Ini -->
         <div style="margin-top: 35px;">
             <h3>📋 Transaksi Hari Ini</h3>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>No Transaksi</th>
-                        <th>Waktu</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if transaksi_list %}
-                        {% for t in transaksi_list %}
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td>TR{{ '%03d'|format(t.id) }}</td>
-                            <td>{{ t.tanggal.strftime('%H:%M') }}</td>
-                            <td>Rp{{ "{:,.0f}".format(t.total) }}</td>
+                            <th>No Transaksi</th>
+                            <th>Waktu</th>
+                            <th>Input Oleh</th>
+                            <th>Total</th>
                         </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr>
-                            <td colspan="3" style="text-align:center; color:#999;">Belum ada transaksi hari ini</td>
-                        </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    </thead>
+                    <tbody>
+            {% if transaksi_list %}
+                {% for t in transaksi_list %}
+                <tr>
+                    <td>TR{{ '%03d'|format(t.id) }}</td>
+                    <td>{{ t.tanggal.strftime('%H:%M') }}</td>
+                    <td>{{ t.kasir.username if t.kasir else '-' }}</td>
+                    <td>Rp{{ "{:,.0f}".format(t.total) }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center; color:#999;">Belum ada transaksi hari ini</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
 
 </body>
 </html>

@@ -171,9 +171,9 @@
 
             const result = await res.json();
             if (result.error) {
-                alert("Gagal: " + result.error);
+                    alert("Gagal: " + result.error);
             } else {
-                alert("Transaksi berhasil! Total: Rp" + result.total.toLocaleString());
+                    alert("Transaksi berhasil! Total: Rp" + result.total.toLocaleString());
                 keranjang = [];
                 renderKeranjang();
                 location.reload();

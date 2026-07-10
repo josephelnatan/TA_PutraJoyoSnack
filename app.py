@@ -355,6 +355,25 @@ def kasir_transaksi():
                 return {"error": f"Stok {barang.nama_barang} tidak mencukupi"}, 400
             total += barang.harga * qty
             barang.stok -= qty
+            
+
+        transaksi_baru = Transaksi(
+            kasir_id=session["user_id"],
+            total=total,
+            tanggal=datetime.now()
+        )
+        db.session.add(transaksi_baru)
+        db.session.flush()
+
+        for item in items:
+            barang = db.session.get(Barang, item.get("barang_id"))
+            detail = DetailTransaksi(
+                transaksi_id=transaksi_baru.id,
+                barang_id=item.get("barang_id"),
+                qty=int(item.get("qty", 0)),
+                subtotal=barang.harga * int(item.get("qty", 0))
+            )
+            db.session.add(detail)
 
         db.session.commit()
         return {"ok": True, "total": total}
