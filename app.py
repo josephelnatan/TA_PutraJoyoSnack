@@ -681,21 +681,26 @@ def barang_masuk():
 def edit_barang_masuk(item_id):
     if "user_id" not in session:
         return redirect("/login")
-
     if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
-        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+        return "Akses Ditolak", 403
 
+    data = BarangMasuk.query.get_or_404(item_id)
     barang_list = Barang.query.order_by(Barang.id).all()
-    data = SimpleNamespace(
-        id=item_id,
-        barang_id=1,
-        supplier="PT Sumber Jaya",
-        jumlah=50,
-        tanggal_masuk="2026-07-01",
-        tanggal_expired="2026-12-31",
-    )
 
     if request.method == "POST":
+        jumlah_lama = data.jumlah
+        data.barang_id = request.form["barang_id"]
+        data.supplier = request.form["supplier"]
+        data.jumlah = int(request.form["jumlah"])
+        data.tanggal_masuk = datetime.strptime(request.form["tanggal_masuk"], "%Y-%m-%d").date()
+        data.tanggal_expired = datetime.strptime(request.form["tanggal_expired"], "%Y-%m-%d").date()
+
+        barang = Barang.query.get(data.barang_id)
+        if barang:
+            barang.stok = barang.stok - jumlah_lama + data.jumlah
+
+        db.session.commit()
+        flash("Data berhasil diupdate!", "success")
         return redirect(url_for("barang_masuk"))
 
     return render_template("gudang/edit_barang_masuk.html", barang_list=barang_list, data=data)
@@ -705,10 +710,17 @@ def edit_barang_masuk(item_id):
 def hapus_barang_masuk(item_id):
     if "user_id" not in session:
         return redirect("/login")
-
     if (session.get("role") or "").lower() not in ["gudang", "staf gudang"]:
-        return "Akses Ditolak: Anda bukan Staff Gudang", 403
+        return "Akses Ditolak", 403
 
+    data = BarangMasuk.query.get_or_404(item_id)
+    barang = Barang.query.get(data.barang_id)
+    if barang:
+        barang.stok -= data.jumlah
+
+    db.session.delete(data)
+    db.session.commit()
+    flash("Data berhasil dihapus!", "success")
     return redirect(url_for("barang_masuk"))
 
 
