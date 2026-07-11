@@ -18,9 +18,8 @@ from models.transaksi import Barang, BarangMasuk, Transaksi, DetailTransaksi, Re
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = "putrajoyosnack_secret"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///putra_joyo_snack.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+from config import Config
+app.config.from_object(Config)
 
 db.init_app(app)
 
