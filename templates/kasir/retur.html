@@ -81,24 +81,31 @@
                 </tr>
             </thead>
             <tbody id="tabel-retur">
-                <tr>
-                    <td>RT01</td>
-                    <td>01-06-2026</td>
-                    <td>Keripik</td>
-                    <td>2</td>
-                    <td>Produk rusak saat diterima</td>
-                    <td><span class="badge badge-pending">Pending</span></td>
-                    <td><button class="btn-update" onclick="bukaUpdateStatus('RT01', 'Pending')">Update Status</button></td>
-                </tr>
-                <tr>
-                    <td>RT02</td>
-                    <td>02-06-2026</td>
-                    <td>Waffer</td>
-                    <td>1</td>
-                    <td>Kemasan penyok</td>
-                    <td><span class="badge badge-disetujui">Disetujui</span></td>
-                    <td><button class="btn-update" onclick="bukaUpdateStatus('RT02', 'Disetujui')">Update Status</button></td>
-                </tr>
+                {% if retur_list %}
+                    {% for r in retur_list %}
+                    <tr>
+                        <td>{{ r.id_retur }}</td>
+                        <td>{{ r.tanggal }}</td>
+                        <td>{{ r.nama_barang }}</td>
+                        <td>{{ r.jumlah }}</td>
+                        <td>{{ r.alasan }}</td>
+                        <td>
+                            {% if r.status == 'Pending' %}
+                                <span class="badge badge-pending">Pending</span>
+                            {% elif r.status == 'Disetujui' %}
+                                <span class="badge badge-disetujui">Disetujui</span>
+                            {% else %}
+                                <span class="badge badge-ditolak">Ditolak</span>
+                            {% endif %}
+                        </td>
+                        <td><button class="btn-update" onclick="bukaUpdateStatus('{{ r.id_retur }}', '{{ r.status }}')">Update Status</button></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; color:#999;">Belum ada data retur</td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
@@ -109,23 +116,23 @@
             <h3>↩️ Tambah Retur</h3>
             <div class="form-group">
                 <label>ID Retur :</label>
-                <input type="text" placeholder="Contoh: RT03">
+                <input type="text" id="r-id" placeholder="Contoh: RT03">
             </div>
             <div class="form-group">
                 <label>Tanggal :</label>
-                <input type="date" id="tanggal-retur">
+                <input type="date" id="r-tanggal">
             </div>
             <div class="form-group">
                 <label>Nama Barang :</label>
-                <input type="text" placeholder="Nama barang yang diretur...">
+                <input type="text" id="r-barang" placeholder="Nama barang yang diretur...">
             </div>
             <div class="form-group">
                 <label>Jumlah :</label>
-                <input type="number" min="1" placeholder="1">
+                <input type="number" id="r-jumlah" min="1" placeholder="1">
             </div>
             <div class="form-group">
                 <label>Alasan :</label>
-                <textarea rows="3" placeholder="Tulis alasan retur..."></textarea>
+                <textarea id="r-alasan" rows="3" placeholder="Tulis alasan retur..."></textarea>
             </div>
             <div class="modal-buttons">
                 <button class="btn-save" onclick="simpanRetur()">Simpan</button>
@@ -160,8 +167,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('tanggal-retur').value = today;
+            document.getElementById('r-tanggal').value = today;
         });
+
         function bukaModal() {
             document.getElementById('modalRetur').style.display = 'block';
         }
@@ -176,30 +184,62 @@
         function tutupModalStatus() {
             document.getElementById('modalStatus').style.display = 'none';
         }
-        function simpanRetur() {
-            alert('Data retur berhasil disimpan!');
-            tutupModal();
+
+        async function simpanRetur() {
+            const id = document.getElementById('r-id').value.trim();
+            const tanggal = document.getElementById('r-tanggal').value;
+            const barang = document.getElementById('r-barang').value.trim();
+            const jumlah = document.getElementById('r-jumlah').value;
+            const alasan = document.getElementById('r-alasan').value.trim();
+
+            if (!id || !barang) {
+                alert('ID Retur dan Nama Barang wajib diisi!');
+                return;
+            }
+
+            const res = await fetch('/kasir/retur', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_retur: id,
+                    tanggal: tanggal,
+                    nama_barang: barang,
+                    jumlah: jumlah,
+                    alasan: alasan,
+                    status: 'Pending'
+                })
+            });
+
+            const result = await res.json();
+            if (result.error) {
+                alert('Gagal: ' + result.error);
+            } else {
+                alert('Retur berhasil ditambahkan!');
+                tutupModal();
+                location.reload();
+            }
         }
+
         async function simpanStatus() {
-    const id = document.getElementById('update-id').value;
-    const status = document.getElementById('update-status').value;
+            const id = document.getElementById('update-id').value;
+            const status = document.getElementById('update-status').value;
 
-    const res = await fetch('/kasir/retur/update-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_retur: id, status: status })
-    });
+            const res = await fetch('/kasir/retur/update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_retur: id, status: status })
+            });
 
-    const result = await res.json();
-    if (result.success) {
-        alert(`Status ${id} berhasil diupdate!`);
-        tutupModalStatus();
-        location.reload();
-    } else {
-        alert('Gagal update status: ' + result.error);
-    }
-
+            const result = await res.json();
+            if (result.success) {
+                alert(`Status ${id} berhasil diupdate!`);
+                tutupModalStatus();
+                location.reload();
+            } else {
+                alert('Gagal update status: ' + result.error);
+            }
         }
+
         function filterTabel() {
             const keyword = document.getElementById('search-retur').value.toLowerCase();
             document.querySelectorAll('#tabel-retur tr').forEach(row => {
