@@ -97,7 +97,12 @@
                     <td>{{ barang.tanggal_kadaluarsa }}</td>
                     <td>{{ barang.admin.username if barang.admin else '-' }}</td>
                     <td>
-                        <a href="/admin/barang/hapus/{{ barang.id }}" style="background-color:#EF5350; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; text-decoration:none;" onclick="return confirm('Hapus barang ini?')">Hapus</a>
+                         <a href="/admin/barang/edit/{{ barang.id }}">
+                        <button style="background:#29B6F6; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold; margin-right:5px;">Edit</button>
+                        </a>
+                        <a href="/admin/barang/hapus/{{ barang.id }}" onclick="return confirm('Yakin hapus?')">
+                        <button style="background:#EF5350; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Hapus</button>
+                        </a>
                     </td>
                 </tr>
                 {% else %}
