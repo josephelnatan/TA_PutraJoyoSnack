@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, flash, url_for, Response
+from flask import Flask, render_template, request, redirect, session, flash, url_for, Response, jsonify
 from config import Config
 from datetime import datetime
 from datetime import date
@@ -382,13 +382,41 @@ def kasir_transaksi():
     return render_template("kasir/transaksi.html", barang_list=barang_list)
 
 
-@app.route("/kasir/retur")
+@app.route("/kasir/retur", methods=["GET", "POST"])
 def kasir_retur():
     if "user_id" not in session:
         return redirect("/login")
-
     if (session.get("role") or "").lower() != "kasir":
         return "Akses Ditolak: Anda bukan Kasir", 403
+
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        id_retur = data.get("id_retur", "").strip()
+        tanggal = data.get("tanggal", "").strip()
+        nama_barang = data.get("nama_barang", "").strip()
+        jumlah = data.get("jumlah", 0)
+        alasan = data.get("alasan", "").strip()
+        status = data.get("status", "Pending").strip()
+
+        if not id_retur or not nama_barang:
+            return jsonify({"error": "ID Retur dan Nama Barang wajib diisi!"}), 400
+
+        existing = Retur.query.filter_by(id_retur=id_retur).first()
+        if existing:
+            return jsonify({"error": f"ID Retur {id_retur} sudah ada!"}), 400
+
+        retur_baru = Retur(
+            id_retur=id_retur,
+            tanggal=tanggal,
+            nama_barang=nama_barang,
+            jumlah=int(jumlah) if jumlah else 0,
+            alasan=alasan,
+            status=status,
+            kasir_id=session["user_id"]
+        )
+        db.session.add(retur_baru)
+        db.session.commit()
+        return jsonify({"success": True})
 
     retur_list = Retur.query.order_by(Retur.tanggal.desc()).all()
     return render_template("kasir/retur.html", retur_list=retur_list)
