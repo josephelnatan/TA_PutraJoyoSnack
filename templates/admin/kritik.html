@@ -11,41 +11,38 @@
         .sidebar a:hover { background-color: #FB8C00; }
         .sidebar .logout-btn { background-color: #E65100; margin-top: 30px; text-align: center; }
         .content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); box-sizing: border-box; }
-        
+
         /* Layout Bagi Dua Sesuai Mockup Halaman 8 */
         .kritik-container { display: flex; gap: 30px; margin-top: 20px; }
         .table-side { flex: 2; }
         .form-side { flex: 1; background-color: #white; padding: 25px; border-radius: 12px; border: 2px solid #FFE0B2; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        
+
         .data-table { width: 100%; border-collapse: collapse; background: white; }
         .data-table th, .data-table td { border: 1px solid #FFE0B2; padding: 12px; text-align: left; font-size: 14px; }
         .data-table th { background-color: #FFA726; color: white; }
         .data-table tr:nth-child(even) { background-color: #FFFDE7; }
-        
+
         /* Badge Status */
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
         .badge-belum { background-color: #FFCDD2; color: #C62828; }
         .badge-sudah { background-color: #C8E6C9; color: #2E7D32; }
-        
+
         /* Form Styling */
         .form-side h3 { margin-top: 0; color: #E65100; font-size: 18px; margin-bottom: 20px; border-bottom: 1px solid #FFE0B2; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #FFCC80; border-radius: 6px; box-sizing: border-box; background-color: #FFFDE7; font-family: inherit; }
-        
+
         /* Baris Tombol Aksi */
         .action-buttons { display: flex; gap: 8px; margin-top: 20px; }
         .btn { padding: 10px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; color: white; font-size: 14px; }
         .btn-save { background-color: #4CAF50; }
         .btn-save:hover { background-color: #45a049; }
-        .btn-edit { background-color: #29B6F6; }
-        .btn-edit:hover { background-color: #0288D1; }
         .btn-delete { background-color: #EF5350; }
         .btn-delete:hover { background-color: #D32F2F; }
     </style>
 </head>
 <body>
-
     <!-- Sidebar Menu Tetap Konsisten -->
     <div class="sidebar">
         <h2>Putra Joyo Snack</h2>
@@ -61,10 +58,9 @@
     <!-- Konten Utama Kelola Kritik -->
     <div class="content">
         <h1>Kritik & Saran Pelanggan</h1>
-        
+
         <div class="kritik-container">
-            
-            <!-- SEBELAH KIRI: Tabel Kritik Sesuai Mockup Halaman 8 -->
+            <!-- SEBELAH KIRI: Tabel Kritik -->
             <div class="table-side">
                 <table class="data-table">
                     <thead>
@@ -76,57 +72,106 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>01-06-2026</td>
-                            <td>Pak Budi</td>
-                            <td>Stok Menipis</td>
-                            <td><span class="badge badge-belum">Belum Diproses</span></td>
-                        </tr>
-                        <tr>
-                            <td>02-06-2026</td>
-                            <td>Pak Agus</td>
-                            <td>Snack Hampir Expired</td>
-                            <td><span class="badge badge-sudah">Sudah Diproses</span></td>
-                        </tr>
+                        {% if kritik_list %}
+                            {% for k in kritik_list %}
+                                <tr data-id="{{ k.id }}" data-tanggal="{{ k.tanggal }}" data-nama="{{ k.nama_pelanggan }}" data-feedback="{{ k.feedback }}" data-status="{{ k.status }}">
+                                    <td>{{ k.tanggal }}</td>
+                                    <td>{{ k.nama_pelanggan }}</td>
+                                    <td>{{ k.feedback }}</td>
+                                    <td>
+                                        {% if k.status == 'Belum Diproses' %}
+                                            <span class="badge badge-belum">Belum Diproses</span>
+                                        {% else %}
+                                            <span class="badge badge-sudah">Sudah Diproses</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="muted">Belum ada data kritik.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
-            
-            <!-- SEBELAH KANAN: Form Manipulasi Detail Sesuai Mockup Halaman 8 -->
+
+            <!-- SEBELAH KANAN: Form (Simpan Baru / Hapus Pilihan) -->
             <div class="form-side">
                 <h3>Detail Kelola Masukan</h3>
-                <form>
+                <form method="POST" action="{{ url_for('admin_kritik_simpan') }}">
+                    <input type="hidden" name="item_id" value="">
+
                     <div class="form-group">
                         <label>Tanggal :</label>
-                        <input type="text" value="01-06-2026">
+                        <input type="text" name="tanggal" value="01-06-2026" required>
                     </div>
                     <div class="form-group">
                         <label>Nama :</label>
-                        <input type="text" value="Pak Budi">
+                        <input type="text" name="nama_pelanggan" value="" required>
                     </div>
                     <div class="form-group">
                         <label>Feedback :</label>
-                        <textarea rows="3">Stok Menipis</textarea>
+                        <textarea rows="3" name="feedback" required></textarea>
                     </div>
                     <div class="form-group">
                         <label>Status :</label>
-                        <select>
-                            <option value="Belum Diproses">Belum Diproses</option>
+                        <select name="status">
+                            <option value="Belum Diproses" selected>Belum Diproses</option>
                             <option value="Sudah Diproses">Sudah Diproses</option>
                         </select>
                     </div>
-                    
-                    <!-- Tombol Kontrol Simpan, Edit, Hapus -->
+
                     <div class="action-buttons">
-                        <button type="button" class="btn btn-save">Simpan</button>
-                        <button type="button" class="btn btn-edit">Edit</button>
-                        <button type="button" class="btn btn-delete">Hapus</button>
+                        <button type="submit" class="btn btn-save">Simpan</button>
+
+                        <form method="POST" action="" id="formHapus" style="display:inline; width:100%">
+                            <input type="hidden" name="item_id" value="">
+                        </form>
+                        <button type="button" class="btn btn-delete" id="btnHapus">Hapus</button>
                     </div>
                 </form>
-            </div>
 
+                <script>
+                    const rows = document.querySelectorAll('tbody tr');
+
+                    const hiddenItemId = document.querySelector('input[name="item_id"]');
+                    const formHapus = document.getElementById('formHapus');
+                    const btnHapus = document.getElementById('btnHapus');
+
+                    const inputTanggal = document.querySelector('input[name="tanggal"]');
+                    const inputNama = document.querySelector('input[name="nama_pelanggan"]');
+                    const inputFeedback = document.querySelector('textarea[name="feedback"]');
+                    const selectStatus = document.querySelector('select[name="status"]');
+
+                    rows.forEach((row) => {
+                        row.style.cursor = 'pointer';
+                        row.addEventListener('click', () => {
+                            const itemId = row.getAttribute('data-id');
+                            hiddenItemId.value = itemId;
+
+                            inputTanggal.value = row.getAttribute('data-tanggal') || '';
+                            inputNama.value = row.getAttribute('data-nama') || '';
+                            inputFeedback.value = row.getAttribute('data-feedback') || '';
+                            const status = row.getAttribute('data-status') || 'Belum Diproses';
+                            selectStatus.value = status;
+                        });
+                    });
+
+                    btnHapus.addEventListener('click', () => {
+                        const itemId = hiddenItemId.value;
+                        if (!itemId) {
+                            alert('Klik baris pada tabel dulu untuk hapus.');
+                            return;
+                        }
+                        formHapus.action = `/admin/kritik/hapus/${itemId}`;
+                        formHapus.innerHTML = `<input type="hidden" name="item_id" value="${itemId}" />`;
+                        formHapus.submit();
+                    });
+                </script>
+            </div>
         </div>
     </div>
-
 </body>
 </html>
+

@@ -15,14 +15,18 @@ from sqlalchemy import extract
 from models.user import db, User
 from models.pengiriman import Pengiriman
 from models.transaksi import Barang, BarangMasuk, Transaksi, DetailTransaksi, Retur
+from models.kritik import Kritik
 
 app = Flask(__name__)
+
 
 from config import Config
 app.config.from_object(Config)
 
 db.init_app(app)
-
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
 
 def init_default_data():
     with app.app_context():
@@ -178,7 +182,23 @@ def admin_user():
 
     users = query.order_by(User.id).all()
     return render_template("admin/user.html", users=users, search_query=search_query)
+@app.route("/admin/user/hapus/<int:item_id>")
+def hapus_user(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
 
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    user = User.query.get_or_404(item_id)
+
+    if user.id == session.get("user_id"):
+        flash("Tidak bisa menghapus akun yang sedang login.", "error")
+        return redirect(url_for("admin_user"))
+
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for("admin_user"))
 
 @app.route("/admin/laporan")
 def admin_laporan():
@@ -303,7 +323,76 @@ def admin_laporan_download_docx():
 
 @app.route("/admin/kritik")
 def admin_kritik():
-    return render_template("admin/kritik.html")
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    kritik_list = Kritik.query.order_by(Kritik.id.desc()).all()
+    return render_template("admin/kritik.html", kritik_list=kritik_list)
+
+
+@app.route("/admin/kritik/simpan", methods=["POST"])
+def admin_kritik_simpan():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    tanggal = (request.form.get("tanggal") or "").strip()
+    nama_pelanggan = (request.form.get("nama_pelanggan") or "").strip()
+    feedback = (request.form.get("feedback") or "").strip()
+    status = (request.form.get("status") or "Belum Diproses").strip() or "Belum Diproses"
+
+    if not tanggal or not nama_pelanggan or not feedback:
+        flash("Tanggal, Nama Pelanggan, dan Feedback wajib diisi.", "error")
+        return redirect(url_for("admin_kritik"))
+
+    item = Kritik(
+        tanggal=tanggal,
+        nama_pelanggan=nama_pelanggan,
+        feedback=feedback,
+        status=status,
+    )
+    db.session.add(item)
+    db.session.commit()
+    return redirect(url_for("admin_kritik"))
+
+
+@app.route("/admin/kritik/edit/<int:item_id>", methods=["POST"])
+def admin_kritik_edit(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    kritik = Kritik.query.get_or_404(item_id)
+
+    kritik.tanggal = (request.form.get("tanggal") or kritik.tanggal).strip()
+    kritik.nama_pelanggan = (request.form.get("nama_pelanggan") or kritik.nama_pelanggan).strip()
+    kritik.feedback = (request.form.get("feedback") or kritik.feedback).strip()
+    kritik.status = (request.form.get("status") or kritik.status).strip() or kritik.status
+
+    db.session.commit()
+    return redirect(url_for("admin_kritik"))
+
+
+@app.route("/admin/kritik/hapus/<int:item_id>", methods=["POST"])
+def admin_kritik_hapus(item_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if (session.get("role") or "").lower() != "admin":
+        return "Akses Ditolak: Anda bukan Admin", 403
+
+    kritik = Kritik.query.get_or_404(item_id)
+    db.session.delete(kritik)
+    db.session.commit()
+    return redirect(url_for("admin_kritik"))
+
 
 
 @app.route("/kasir/dashboard")

@@ -81,7 +81,12 @@
                     <td>{{ user.username }}</td>
                     <td>{{ user.role }}</td>
                     <td>
-                        <button class="btn-delete" disabled>Hapus User</button>
+                        <a href="{{ url_for('hapus_user', item_id=user.id) }}" 
+                        class="btn-delete" 
+                        style="text-decoration:none; display:inline-block;"
+                        onclick="return confirm('Yakin ingin menghapus user ini?')">
+                            Hapus User
+                        </a>
                     </td>
                 </tr>
                 {% endfor %}
