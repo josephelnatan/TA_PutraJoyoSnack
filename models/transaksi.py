@@ -7,10 +7,11 @@ class Barang(db.Model):
     nama_barang = db.Column(db.String(100), nullable=False)
     harga = db.Column(db.Integer, nullable=False)
     stok = db.Column(db.Integer, nullable=False)
-    satuan = db.Column(db.String(20), nullable=False)
-    tanggal_masuk = db.Column(db.String(20), nullable=False)
-    tanggal_kadaluarsa = db.Column(db.String(20), nullable=False)
-    id_admin_fk = db.Column(db.String(50), nullable=False)
+    satuan = db.Column(db.String(20), nullable=True)        # ← nullable=True
+    tanggal_masuk = db.Column(db.String(20), nullable=True) # ← nullable=True
+    tanggal_kadaluarsa = db.Column(db.String(20), nullable=True) # ← nullable=True
+    id_admin_fk = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    admin = db.relationship('User', foreign_keys=[id_admin_fk], backref='barang')
 
 class BarangMasuk(db.Model):
     __tablename__ = "barang_masuk"

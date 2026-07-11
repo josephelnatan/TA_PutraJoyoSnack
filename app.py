@@ -100,8 +100,9 @@ def admin_barang():
         satuan = request.form.get("satuan", "Pcs")
         tgl_masuk = request.form.get("tanggal_masuk")
         tgl_expired = request.form.get("tanggal_kadaluarsa")
+        
 
-        penginput = session.get("username", "Unknown Admin")
+        penginput = session.get("user_id")
 
         if nama:
             barang_baru = Barang(

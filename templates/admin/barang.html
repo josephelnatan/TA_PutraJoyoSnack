@@ -95,7 +95,7 @@
                     <td>{{ barang.satuan }}</td>
                     <td>{{ barang.tanggal_masuk }}</td>
                     <td>{{ barang.tanggal_kadaluarsa }}</td>
-                    <td>{{ barang.id_admin_fk }}</td>
+                    <td>{{ barang.admin.username if barang.admin else '-' }}</td>
                     <td>
                         <a href="/admin/barang/hapus/{{ barang.id }}" style="background-color:#EF5350; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; text-decoration:none;" onclick="return confirm('Hapus barang ini?')">Hapus</a>
                     </td>
